@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Detector syntax and CLI smoke
+        run: |
+          node --check cli/detect.mjs
+          node cli/detect.mjs --help > /dev/null
+
+      - name: Host adapters in sync with AGENTS.md
+        run: node scripts/sync-adapters.mjs --check
+
+      - name: Rule reference in sync with detector
+        run: |
+          node scripts/gen-rules-doc.mjs
+          git diff --exit-code docs/rules.md \
+            || (echo "::error::docs/rules.md is stale — run node scripts/gen-rules-doc.mjs" && exit 1)
+
+      - name: Skill frontmatter is valid
+        run: node scripts/check-skills.mjs
+
+      - name: Detector self-test against fixtures
+        run: node scripts/test-detector.mjs
+
+      - name: Eval cases well-formed
+        run: node scripts/run-evals.mjs validate
+
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: All JSON manifests parse
+        run: |
+          for f in package.json gemini-extension.json \
+                   .claude-plugin/plugin.json .claude-plugin/marketplace.json \
+                   .codex-plugin/plugin.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" \
+              && echo "ok  $f" || (echo "bad $f" && exit 1)
+          done
+
+      - name: LICENSE year and holder present
+        run: grep -q 'Copyright (c)' LICENSE

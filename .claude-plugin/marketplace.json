@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "ship",
+  "description": "ship-with-me and ship-without-me — two ways to build an app that is actually launchable.",
+  "owner": {
+    "name": "chaitu237",
+    "url": "https://github.com/chaitu237"
+  },
+  "plugins": [
+    {
+      "name": "ship",
+      "displayName": "ship-with-me / ship-without-me",
+      "description": "Two orchestrators and 23 supporting skills that derive the right answer instead of listing options, plus a zero-dependency launch-readiness checker.",
+      "source": "./",
+      "category": "development",
+      "keywords": ["agent-skills", "launch-readiness", "code-quality", "orchestration"]
+    }
+  ]
+}

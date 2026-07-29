@@ -1,0 +1,26 @@
+{
+  "name": "ship",
+  "version": "0.1.0",
+  "description": "Derivation-first skills for shipping launchable apps.",
+  "author": { "name": "chaitu237", "url": "https://github.com/chaitu237" },
+  "homepage": "https://github.com/chaitu237/Ship-without-me",
+  "repository": "https://github.com/chaitu237/Ship-without-me",
+  "license": "MIT",
+  "keywords": ["skills", "agent-skills", "code-quality", "launch-readiness"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "ship",
+    "shortDescription": "Build apps that are actually launchable",
+    "longDescription": "25 skills that derive decisions from the situation rather than listing options, plus a zero-dependency checker for the gap between 'it works' and 'it can be launched'.",
+    "developerName": "chaitu237",
+    "category": "Development",
+    "capabilities": ["Instructions", "Slash commands", "CLI"],
+    "websiteURL": "https://github.com/chaitu237/Ship-without-me",
+    "defaultPrompt": [
+      "Ship this without me.",
+      "Ship with me — here are my references.",
+      "Is this ready to launch?"
+    ],
+    "brandColor": "#2563EB"
+  }
+}

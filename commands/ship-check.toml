@@ -1,0 +1,17 @@
+description = "Run the deterministic launch-readiness checker on this repo or a URL"
+prompt = """
+Run the checker, then act on what it finds.
+
+```bash
+npx ship detect {{args}}
+```
+
+For each failure, load the skill that owns that rule group — `launch` → ship-ready-audit,
+`deploy` → deployment-hardening, `schema`/`spine` → database-schema, `api` →
+backend-api-design, `forms` → forms-and-validation, `states`/`list` → states-and-feedback
+and list-and-table, `account` → account-lifecycle, `legal` → legal-and-consent, `design` →
+design-system-commit, `frontend` → frontend-architecture.
+
+Fix the failures. Report warnings with a recommendation each. Do not waive anything without
+a stated reason and the user's agreement.
+"""

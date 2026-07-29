@@ -1,0 +1,27 @@
+{
+  "name": "ship",
+  "version": "0.1.0",
+  "description": "Derivation-first agent skills for shipping launchable apps, plus a zero-dependency launch-readiness checker.",
+  "type": "module",
+  "bin": { "ship": "./cli/detect.mjs" },
+  "files": ["cli/", "skills/", "commands/", "docs/", "AGENTS.md", "LICENSE", "README.md"],
+  "scripts": {
+    "detect": "node cli/detect.mjs",
+    "test": "npm run lint:syntax && npm run check:skills && npm run test:detector && npm run check:adapters && npm run evals:validate",
+    "lint:syntax": "node --check cli/detect.mjs && node cli/detect.mjs --help > /dev/null",
+    "check:skills": "node scripts/check-skills.mjs",
+    "check:adapters": "node scripts/sync-adapters.mjs --check",
+    "test:detector": "node scripts/test-detector.mjs",
+    "evals:validate": "node scripts/run-evals.mjs validate",
+    "evals:plan": "node scripts/run-evals.mjs plan --trials 3",
+    "sync": "node scripts/sync-adapters.mjs && node scripts/gen-rules-doc.mjs"
+  },
+  "keywords": ["agent-skills", "claude-code", "codex", "launch-readiness", "linter", "ci", "skills"],
+  "license": "MIT",
+  "author": { "name": "chaitu237", "url": "https://github.com/chaitu237" },
+  "repository": { "type": "git", "url": "git+https://github.com/chaitu237/Ship-without-me.git" },
+  "homepage": "https://github.com/chaitu237/Ship-without-me#readme",
+  "bugs": { "url": "https://github.com/chaitu237/Ship-without-me/issues" },
+  "engines": { "node": ">=18" },
+  "dependencies": {}
+}

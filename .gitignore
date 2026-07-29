@@ -1,0 +1,22 @@
+node_modules/
+.DS_Store
+*.log
+
+# Secrets — every variant. A plain ".env" entry does NOT match ".env.rtf",
+# ".env.local", ".env backup", or whatever an editor decides to append.
+.env
+.env.*
+*.env
+.env*
+!.env.example
+*token*
+*secret*
+*credential*
+!scripts/*.mjs
+!cli/*.mjs
+
+# Working state written by the orchestrator skills into a consuming project
+.ship/
+
+# Eval run output — results are machine-specific, cases are not
+evals/results/

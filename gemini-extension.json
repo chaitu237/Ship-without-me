@@ -1,0 +1,6 @@
+{
+  "name": "ship",
+  "version": "0.1.0",
+  "description": "Derivation-first skills for shipping launchable apps.",
+  "contextFileName": "AGENTS.md"
+}

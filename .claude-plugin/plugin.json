@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "ship",
+  "version": "0.1.0",
+  "description": "ship-with-me and ship-without-me: two ways to build a launchable app, backed by 23 supporting skills and a deterministic checker that needs no model.",
+  "author": {
+    "name": "chaitu237",
+    "url": "https://github.com/chaitu237"
+  },
+  "homepage": "https://github.com/chaitu237/Ship-without-me",
+  "repository": "https://github.com/chaitu237/Ship-without-me",
+  "license": "MIT",
+  "keywords": ["agent-skills", "launch-readiness", "code-quality", "orchestration", "ci"],
+  "skills": "./skills/",
+  "commands": "./commands/"
+}
