@@ -61,8 +61,8 @@ One rule generates all the specifics: **a state must say what is true and what t
 ✗ "No data"                        true, useless — no next action
 ✗ "Something went wrong"           neither specific nor actionable
 ✗ a spinner with no end            promises "soon" without evidence
-✓ "No invoices yet. Create one, or import from a spreadsheet.  [New] [Import]"
-✓ "Couldn't load invoices. Check your connection.  [Retry]"
+✓ "Nothing saved yet. Create your first one, or import what you already have."
+✓ "Couldn't load this. Check your connection.  [Retry]"
 ✓ "You need admin access to edit billing. Ask your workspace owner."
 ```
 
@@ -93,9 +93,9 @@ it must genuinely reverse.
 Dialog wording follows from the same rule — say what is true, say what happens:
 
 ```
-Delete invoice INV-1042?
-This permanently removes the invoice and its 3 line items. This cannot be undone.
-[ Cancel ]  [ Delete invoice ]
+Delete "Q3 planning"?
+This permanently removes it and the 3 items inside it. This cannot be undone.
+[ Cancel ]  [ Delete ]
 ```
 
 Label the button with the **verb**. "OK" and "Yes" are meaningless read out of context by

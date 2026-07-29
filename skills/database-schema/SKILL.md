@@ -23,7 +23,7 @@ Ask these of each column before you type its type.
 ```
 Does it IDENTIFY something a client will see?
   yes → UUID (v7/ULID so it sorts by time). Never a sequential integer:
-        /invoices/1847 tells a competitor your volume and invites enumeration.
+        /orders/1847 tells a competitor your volume and invites enumeration.
         If it can be created offline, the CLIENT generates it — that is what
         makes the sync retry idempotent instead of duplicating rows.
 
@@ -54,7 +54,7 @@ If a column answers "no" to all four, ask whether you need it at all.
 ```
 Is there a real difference between "we don't know" and "it's empty/zero"?
 ├─ yes ──► nullable, and document what NULL means for this column
-└─ no ───► NOT NULL with a default. Zero invoices is 0, not NULL.
+└─ no ───► NOT NULL with a default. Zero completed sessions is 0, not NULL.
 ```
 
 The failure this prevents: a column where both `NULL` and `''` occur means every query
@@ -101,7 +101,7 @@ INSERT INTO payments (..., amount_minor, reverses_id) VALUES (..., -3000, '<orig
 composite index**.
 
 ```sql
-CREATE INDEX idx_invoices_tenant_status ON invoices (tenant_id, status, created_at DESC);
+CREATE INDEX idx_records_tenant_status ON records (tenant_id, status, created_at DESC);
 ```
 
 Tenant first, always. An index starting with `status` cannot serve a tenant-scoped query

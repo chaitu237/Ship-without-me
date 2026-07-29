@@ -252,7 +252,9 @@ three of these, and say which you used:
 
 ```
 ├─ Search the PRACTITIONER's words, not the industry's
-│    "how do petrol pump dealers close a shift" beats "fuel retail software"
+│    "how do <these people> actually do <this task>" beats "<industry> software"
+│    The practitioner phrasing surfaces forums and walkthroughs; the industry
+│    phrasing surfaces vendors selling to them.
 │    Trade forums, subreddits, YouTube walkthroughs, job ads for the role
 ├─ Find the STATUTORY layer
 │    What forms, registers, licences, tax filings, inspection regimes apply?

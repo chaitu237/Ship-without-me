@@ -30,8 +30,8 @@ Take everything the user gave you and extract what you can:
 | Screenshot / image | theme (light/dark), accent hue, layout archetype, nav items, density |
 | Competitor URL | raw HTML before JS, title/meta/OG, nav labels, CTA copy, section order |
 | Existing repo | stack, schema, conventions, existing tokens, naming style |
-| Brand guide / Figma | color tokens, type scale, spacing |
-| Written spec | operator, job, vertical, must-have features |
+| Brand guide or design file | colour tokens, type scale, spacing |
+| Written spec | primary user, the job, product shape, must-have features |
 
 For a URL, fetch the **pre-JavaScript HTML** — that is the real structure. For an image,
 read it and name what you see concretely: theme, dominant accent, whether it's a centered
@@ -68,10 +68,18 @@ tell you what to do.**
 Walk the decision tree **top-down**. Resolve parents before children — a child question
 is often moot once the parent lands.
 
+**Resolve the product shape first.** It decides what the later questions even mean — a
+game has no "modules", an analytical product has no "operator", a developer tool's user is
+the builder. Get this wrong and every question below is subtly the wrong question.
+
 ```
-operator & job ──► vertical ──► module set ──► per-module scope
+primary user & the job ──► PRODUCT SHAPE ──► what a complete first slice is
+       │                   (work tool · personal · two-sided · analytical ·
+       │                    developer tool · internal · automation · content)
+       │
        ├─► theme & accent ──► layout archetype
-       ├─► auth model     ──► demo mode? ──► seeded roles
+       ├─► auth model     ──► demo access? ──► seeded roles
+       ├─► where content comes from on day one
        ├─► market/region  ──► compliance surface
        └─► connectivity   ──► offline policy ──► conflict rules
 ```
@@ -79,13 +87,14 @@ operator & job ──► vertical ──► module set ──► per-module scop
 ### Question format
 
 ```
-Q3 of ~9 · Module set
+Q3 of ~6 · What the first slice covers
 
-From your reference: it runs a customer list, a job board, and an invoice screen.
+From your reference: three distinct surfaces, and one of them is where the value lands.
 
-→ Recommended: CRM + Ops ledger + Invoicing for v1. Defer reporting to v2.
-  Why: those are the three your operator touches daily; a focused three-module v1
-  ships and gets used, a six-module v1 becomes six half-finished screens.
+→ Recommended: build only the one that produces the first useful outcome, end to end,
+  including its failure path. Defer the other two.
+  Why: one journey that works gets used and can be extended by anyone. Three
+  half-journeys get abandoned, and you cannot tell which one was worth finishing.
 
 [accept] [change] [tell me more]
 ```
@@ -114,12 +123,12 @@ up or defaulted.
 
 Non-blocking gaps are not questions. They are logged assumptions:
 
-> "Assuming invoices are per-job, not monthly — that's reversible, and the first invoice
-> you create will tell us if it's wrong."
+> "Assuming records are grouped per job rather than per month — reversible, and the first
+> real one you create will tell us if it's wrong."
 
 - **Skip anything the references already answered.** If the screenshot is dark with a blue
   accent, that is decided. Say so; don't ask.
-- **Ask about decisions, never about facts.** "Per-job or per-month invoicing?" is a
+- **Ask about decisions, never about facts.** "Grouped per job or per month?" is a
   decision. "What's your accent colour?" — when they handed you a screenshot — is not.
 - **Stop when the tree is exhausted and the user confirms.** No code before they say go.
 

@@ -22,7 +22,7 @@ state".
 
 ```
 Where does the truth for this value live?
-├─ ON THE SERVER (invoices, users, anything fetched)
+├─ ON THE SERVER (records, messages, users — anything fetched)
 │    → a query cache. NOT Context, NOT a global store.
 │      Server state is a *copy* with a staleness problem — you need caching,
 │      deduplication, background refresh and retry, all of which a query
@@ -59,7 +59,7 @@ introduces token refresh — how many files do you edit?
 
 One module owns transport: base URL from env, auth attached, envelope unwrapped, errors
 normalized to one shape, 401 → refresh once → redirect. Then a thin per-feature layer
-exposes `listInvoices`, `createInvoice`. Components call those, never a raw URL.
+exposes `listItems`, `createItem`. Components call those, never a raw URL.
 
 **Never hardcode a base URL.** It comes from an env var, and the app fails loudly at boot
 if it is missing — not on the first request that needs it.
@@ -74,7 +74,7 @@ If this feature were cancelled tomorrow, how many folders would you touch?
 
 ```
 src/
-├── features/invoices/     components, hooks, api, schema, types — all of it
+├── features/<feature>/    components, hooks, api, schema, types — all of it
 ├── components/ui/         shared primitives only
 ├── lib/                   apiClient, formatters
 └── routes/

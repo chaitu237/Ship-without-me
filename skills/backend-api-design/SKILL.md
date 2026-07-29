@@ -21,18 +21,21 @@ rewrite — cannot ask you what you meant. The contract has to say it.
 ```
 Is this a THING the client can hold?
 ├─ yes ──► a resource. Plural noun, standard verbs, depth ≤ 3.
-│          GET/POST /api/v1/invoices · GET/PATCH/DELETE /api/v1/invoices/:id
+│          GET/POST /api/v1/documents · GET/PATCH/DELETE /api/v1/documents/:id
 │
 └─ no, it's an ACTION that happens to a thing
    ├─ Does it change the thing's state? ──► sub-resource, POST
-   │     POST /api/v1/invoices/:id/send · /shifts/:id/close
+   │     POST /api/v1/documents/:id/publish · /sessions/:id/end · /runs/:id/cancel
    │     Honest and readable. Do not contort it into PATCH {action:"send"}.
    └─ Is it a query too complex for params? ─► POST /api/v1/<thing>/search
          Rare. Exhaust query params first.
 ```
 
-Nesting stops at one level. `/customers/:cid/invoices` is fine;
-`/customers/:cid/invoices/:iid/lines/:lid/tax` is a URL nobody can maintain — the deeper
+The resource nouns below are illustrative — substitute whatever your product actually
+holds. The shape is what transfers, not the vocabulary.
+
+Nesting stops at one level. `/projects/:pid/tasks` is fine;
+`/projects/:pid/tasks/:tid/comments/:cid/reactions` is a URL nobody can maintain — the deeper
 resource has its own id, so address it directly.
 
 Verbs in paths (`/getInvoices`, `/createNewInvoice`) are RPC wearing REST's clothes. Pick
@@ -93,7 +96,7 @@ Authentication proves *who*. It does not prove *may*. Check ownership on every s
 resource fetch, server side.
 
 ```
-GET /api/v1/invoices/:id  where the invoice belongs to another tenant
+GET /api/v1/documents/:id  where that document belongs to another tenant
 └─ return 404, NOT 403.  403 confirms the record exists.
 ```
 
@@ -101,7 +104,7 @@ GET /api/v1/invoices/:id  where the invoice belongs to another tenant
 param or body is a full data breach with a friendly interface:
 
 ```js
-✗ GET /api/v1/invoices?tenant_id=<anything the client likes>
+✗ GET /api/v1/documents?tenant_id=<anything the client likes>
 ✓ const tenantId = session.tenantId
 ```
 
