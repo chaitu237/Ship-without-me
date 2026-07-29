@@ -18,7 +18,7 @@
   },
   "keywords": ["agent-skills", "claude-code", "codex", "launch-readiness", "linter", "ci", "skills"],
   "license": "MIT",
-  "author": { "name": "chaitu237", "url": "https://github.com/chaitu237" },
+  "author": { "name": "Chaitanya Dawkhar", "url": "https://github.com/chaitu237" },
   "repository": { "type": "git", "url": "git+https://github.com/chaitu237/Ship-without-me.git" },
   "homepage": "https://github.com/chaitu237/Ship-without-me#readme",
   "bugs": { "url": "https://github.com/chaitu237/Ship-without-me/issues" },
