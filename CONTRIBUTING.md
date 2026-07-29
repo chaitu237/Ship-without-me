@@ -55,7 +55,7 @@ symptom→cause table · don't.
 
 Rules live in `cli/detect.mjs`. Constraints, in order of importance:
 
-1. **Zero dependencies.** Node 18+ built-ins only. This is what lets `npx ship detect`
+1. **Zero dependencies.** Node 18+ built-ins only. This is what lets `npx ship-without-me detect`
    run anywhere with no install step.
 2. **No false positives.** A noisy rule gets the whole tool disabled. If you cannot
    express it without flagging correct code, it belongs in a skill's judgement checklist
@@ -103,5 +103,5 @@ and why.
 ```bash
 npm test                      # syntax + CLI smoke
 node scripts/gen-rules-doc.mjs
-npx ship detect --help
+npx ship-without-me detect --help
 ```

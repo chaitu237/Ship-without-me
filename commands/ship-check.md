@@ -6,7 +6,7 @@ argument-hint: [--url https://…] [--rules group] [--strict]
 Run the checker, then act on what it finds.
 
 ```bash
-npx ship detect $ARGUMENTS
+npx ship-without-me detect $ARGUMENTS
 ```
 
 For each failure, load the skill that owns it — the rule group maps to a skill:

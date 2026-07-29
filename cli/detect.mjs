@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ship detect — deterministic launch-readiness rules. No LLM, no API key, no dependencies.
-// Works out of the box: `npx ship detect` figures out what to check on its own.
+// Works out of the box: `npx ship-without-me detect` figures out what to check on its own.
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { join, extname, relative } from 'node:path'
@@ -496,11 +496,11 @@ if (argv.includes('--help') || argv.includes('-h')) {
   console.log(`
 ship detect — deterministic launch-readiness checks. No LLM, no key, no deps.
 
-  npx ship detect                      auto-detect what to check
-  npx ship detect --url https://...    check a deployed URL
-  npx ship detect --rules launch       one group: launch|deploy|schema|frontend
-  npx ship detect --json               machine-readable, for CI
-  npx ship detect --strict             warnings fail the build too
+  npx ship-without-me detect                      auto-detect what to check
+  npx ship-without-me detect --url https://...    check a deployed URL
+  npx ship-without-me detect --rules launch       one of 12 groups (see docs/rules.md)
+  npx ship-without-me detect --json               machine-readable, for CI
+  npx ship-without-me detect --strict             warnings fail the build too
 
 Waive a rule inline, with a reason:
   <!-- ${DIR} no-h1: intentional SPA shell -->

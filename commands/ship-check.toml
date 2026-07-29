@@ -3,7 +3,7 @@ prompt = """
 Run the checker, then act on what it finds.
 
 ```bash
-npx ship detect {{args}}
+npx ship-without-me detect {{args}}
 ```
 
 For each failure, load the skill that owns that rule group — `launch` → ship-ready-audit,

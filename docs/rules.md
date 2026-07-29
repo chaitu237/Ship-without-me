@@ -5,10 +5,10 @@ Generated from `cli/detect.mjs` by `scripts/gen-rules-doc.mjs`. Do not edit by h
 **51 rules across 12 groups.**
 
 ```bash
-npx ship detect                          # auto-detect what to check
-npx ship detect --rules <group>[,<group>]
-npx ship detect --json                   # machine-readable, for CI
-npx ship detect --strict                 # warnings fail the build too
+npx ship-without-me detect                          # auto-detect what to check
+npx ship-without-me detect --rules <group>[,<group>]
+npx ship-without-me detect --json                   # machine-readable, for CI
+npx ship-without-me detect --strict                 # warnings fail the build too
 ```
 
 Groups: `launch` · `deploy` · `schema` · `spine` · `frontend` · `design` · `forms` · `states` · `account` · `legal` · `api` · `list`

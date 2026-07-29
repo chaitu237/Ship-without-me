@@ -19,30 +19,57 @@ key, and no dependencies.
 
 ## Install
 
-**Claude Code**
+### Claude Code
 
 ```bash
 /plugin marketplace add chaitu237/Ship-without-me
-/plugin install ship@ship
+/plugin install ship@ship-without-me
 ```
 
-**Any agent, via the skills CLI**
+Then `/ship-without-me`, `/ship-with-me`, and `/ship-check` are available, and the 25
+supporting skills load on demand.
+
+### Any agent that reads `AGENTS.md`
+
+Cursor, Windsurf, Cline, Kiro, Zed, Copilot, Amp, Jules and others read a root-level
+instruction file. Copy one file into your project and you have the whole ruleset:
 
 ```bash
-npx -y skills add chaitu237/Ship-without-me --agent claude-code
+curl -O https://raw.githubusercontent.com/chaitu237/Ship-without-me/main/AGENTS.md
 ```
 
-**The checker alone — no agent required**
+Per-host rule files (`.cursor/rules/`, `.clinerules/`, `.kiro/steering/`, `.windsurf/rules/`,
+`.github/copilot-instructions.md`) are in the repo if you prefer them. All are generated
+from `AGENTS.md`, so they never disagree with it. See
+[docs/portability.md](docs/portability.md).
+
+### The checker, with no agent at all
 
 ```bash
-npx ship detect --url https://your-app.com
+npx ship-without-me detect --url https://your-app.com
 ```
 
-**Cursor, Windsurf, Cline, Kiro, Zed, Copilot and others** read `AGENTS.md` from the repo
-root. Copy this repo's `AGENTS.md` into your project and you have the ruleset with zero
-configuration. See [docs/portability.md](docs/portability.md).
+Or from a clone, with nothing installed — it has zero dependencies:
+
+```bash
+git clone https://github.com/chaitu237/Ship-without-me.git
+node Ship-without-me/cli/detect.mjs --url https://your-app.com
+```
+
+### Codex and Gemini CLI
+
+`.codex-plugin/plugin.json` and `gemini-extension.json` ship in the repo. Point your host
+at the clone; both read `skills/` directly.
 
 ---
+
+## Verify it installed
+
+```bash
+npx ship-without-me detect --help     # should print the rule groups
+```
+
+In an agent, ask it to *"list the ship skills you can see"* — you should get 27.
 
 ## The two ways to build
 
@@ -95,11 +122,11 @@ your brand colour is.
 A deterministic checker. 51 rules, zero dependencies, runs in about a second.
 
 ```bash
-npx ship detect                       # auto-detects the repo and the URL
-npx ship detect --url https://…       # check a deployed site
-npx ship detect --rules launch,api    # one group
-npx ship detect --json                # for CI
-npx ship detect --strict              # warnings fail too
+npx ship-without-me detect                       # auto-detects the repo and the URL
+npx ship-without-me detect --url https://…       # check a deployed site
+npx ship-without-me detect --rules launch,api    # one group
+npx ship-without-me detect --json                # for CI
+npx ship-without-me detect --strict              # warnings fail too
 ```
 
 ```
@@ -245,19 +272,38 @@ cost near 1,200 tokens instead of 2,500.
 ## Repository layout
 
 ```
-skills/               25 skill folders, one SKILL.md each, plus AUTHORING.md
-cli/detect.mjs        the checker — 51 rules, zero dependencies
-commands/             slash commands (.md for Claude Code, .toml for Gemini CLI)
+skills/               27 skill folders, one SKILL.md each
+  AUTHORING.md        the standard every skill is held to, enforced in CI
+  <skill>/eval/       cases.jsonl — what the skill claims, made testable
+cli/detect.mjs        the checker: 51 rules, zero dependencies
+commands/             slash commands — .md (Claude Code) + .toml (Gemini CLI)
+scripts/              generators and validators, all run by `npm test`
 docs/
-  rules.md            every detector rule, what it catches, how to waive it
+  rules.md            every rule, what it catches, how to waive it (generated)
   portability.md      which hosts get what, and how to add another
+  evaluation.md       how a skill's claim is measured
 AGENTS.md             the portable ruleset — read automatically by a dozen agents
+CONTEXT.md            shared vocabulary, so 27 skills cannot drift apart
 .claude-plugin/       Claude Code plugin + marketplace manifests
-.codex-plugin/        Codex manifest
-.cursor/ .clinerules/ .kiro/ .windsurf/ .github/   thin per-host rule files
+.codex-plugin/  gemini-extension.json
+.cursor/ .clinerules/ .kiro/ .windsurf/ .github/   per-host rule files, generated
 ```
 
----
+Nothing in this repo is hand-copied. The per-host rule files are generated from
+`AGENTS.md` and `docs/rules.md` from `cli/detect.mjs`, and CI fails if either drifted.
+
+## Documentation
+
+| Read this | When |
+|---|---|
+| [docs/rules.md](docs/rules.md) | a rule fired and you want to know why |
+| [docs/portability.md](docs/portability.md) | your agent is not listed above |
+| [docs/evaluation.md](docs/evaluation.md) | you want to measure whether a skill works |
+| [skills/AUTHORING.md](skills/AUTHORING.md) | you are writing or editing a skill |
+| [CONTEXT.md](CONTEXT.md) | you are unsure which word this project uses |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | you are opening a pull request |
+| [SECURITY.md](SECURITY.md) | you found a rule that fails open |
+| [CHANGELOG.md](CHANGELOG.md) | you want to know what is not done yet |
 
 ## Contributing
 
