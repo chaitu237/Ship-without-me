@@ -27,9 +27,8 @@ properties, answered before any architecture is chosen, written to `.ship/PROFIL
 | **What identity boundary exists** | none · local profile · one authenticated user · shared household · workspace · multi-tenant · public anonymous |
 | **What proves it works** | the observable loop from first action to promised outcome |
 
-Two products can share a label and share no architecture. A music player and a habit
-tracker are both "personal products"; they have almost nothing in common. The properties
-separate them, the label does not.
+Two products can share a label and share no architecture — a music player and a habit
+tracker are both "personal products". The properties separate them; the label does not.
 
 ## Decide, don't dither
 
@@ -84,8 +83,7 @@ automation      Trigger · Run · Step · Attempt · Result
 repair shop     Customer · Vehicle · Job · Line · Invoice
 ```
 
-*Conditional — multi-tenant work tools only.* Where several isolated customers share
-infrastructure, a party/item/event spine earns its place:
+*Conditional — multi-tenant work tools only,* where isolated customers share infrastructure:
 
 ```text
 Tenant ──< User ──< Role
@@ -99,8 +97,8 @@ Tenant ──< User ──< Role
 every table, NOT NULL, FK, indexed, scoped at the data layer with a query wrapper and never
 in handlers — handlers forget, and that is the incident.
 
-Do not reach for this spine outside that shape. A `PlaybackSession` is not an `Event`, and
-forcing it into one buys a join and loses the thing that made it a session.
+Not outside that shape. A `PlaybackSession` is not an `Event`; forcing it into one buys a
+join and loses the thing that made it a session.
 
 ---
 
@@ -143,26 +141,17 @@ has a named owner and a way to prove it:
 ## Non-goals              what this slice deliberately excludes
 ```
 
-The path is observable steps, not features:
+The path is observable steps, not features — `import a file → metadata shows → select →
+audio is audible → progress advances → seek moves it → leave the screen, playback continues`
+rather than `[x] playback implemented`. A checkbox cannot fail.
 
-```text
-music player   import a file → metadata shows → select → audio is audible → progress
-               advances → seek moves it → leave the screen, playback continues →
-               track ends → next one starts
-menu catalogue open menu → pick a category → find a dish → open it → see the recipe
-```
+The failure path is part of the contract: *unsupported file → does NOT sit in "loading" →
+the item and the exact reason are shown → the user can remove it or pick another.* If it
+reads "show an error", it is not finished.
 
-And the failure path is part of the contract, not an afterthought:
-
-```text
-unsupported or corrupt file → does NOT sit in "loading" → the track name and the exact
-reason are shown → the user can remove it or pick another
-```
-
-**Evidence types** — pick per claim, cheapest that actually proves it: `command_exit` ·
-`unit_assertion` · `browser_assertion` · `network_trace` · `runtime_event_trace` ·
-`database_record` · `persisted_reload` · `visual_snapshot` · `accessibility_tree` ·
-`manual_judgement`.
+**Evidence** — cheapest that actually proves the claim: `command_exit` · `unit_assertion` ·
+`browser_assertion` · `network_trace` · `runtime_event_trace` · `database_record` ·
+`persisted_reload` · `visual_snapshot` · `accessibility_tree` · `manual_judgement`.
 
 A green test suite that never exercised the loop is not evidence the loop works.
 
