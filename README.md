@@ -313,6 +313,7 @@ docs/
   rules.md            every rule, what it catches, how to waive it (generated)
   portability.md      which hosts get what, and how to add another
   evaluation.md       how a skill's claim is measured
+  generalization.md   why the core is 6 skills and the rest are gated
 AGENTS.md             the portable ruleset — read automatically by a dozen agents
 CONTEXT.md            shared vocabulary, so the skills cannot drift apart
 schemas/              profile and first-value contract, as JSON Schema
@@ -330,6 +331,7 @@ Nothing in this repo is hand-copied. The per-host rule files are generated from
 |---|---|
 | [docs/rules.md](docs/rules.md) | a rule fired and you want to know why |
 | [docs/portability.md](docs/portability.md) | your agent is not listed above |
+| [docs/generalization.md](docs/generalization.md) | you want to know why a skill was or was not selected |
 | [docs/evaluation.md](docs/evaluation.md) | you want to measure whether a skill works |
 | [skills/AUTHORING.md](skills/AUTHORING.md) | you are writing or editing a skill |
 | [CONTEXT.md](CONTEXT.md) | you are unsure which word this project uses |
