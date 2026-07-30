@@ -12,6 +12,62 @@ All notable changes to this project are documented here. Format follows
   self-tested against fixtures; the `/ship-with-me` interview and the wave pipeline are not
   yet exercised. Treat `0.1.0` as pre-release until they are.
 
+## [0.2.0]
+
+Architecture is now derived from properties of the product instead of applied from a
+default. The previous version had a fixed pipeline — schema, API, auth, tenancy, shell,
+landing — that every product walked regardless of what it was.
+
+### Changed — the defaults that were never universal
+
+- **Scope** was "three modules for v1"; it is now one complete first-value loop. Three
+  modules applies only where the profile establishes that modules exist.
+- **Auth** was "always, with a demo tenant"; it is now none until a named reason requires
+  it — privacy, sharing, sync, ownership, payment, or permissions.
+- **Backend** was assumed; it is now earned by remote storage, sync, shared state,
+  server-held secrets, integrations, or central processing.
+- **The tenant/party/item/event spine** was the data model for every app; it is now scoped
+  to multi-tenant work tools. Nouns are otherwise derived from the loop.
+- **The landing page** was built for everything; it now requires public distribution.
+- **Launch, legal, account and tenancy checks** were universal; they are conditional packs.
+  Passing a pack that does not apply is not evidence of anything.
+
+### Added
+
+- `product-profile` — six properties that select the build, written to `.ship/PROFILE.json`
+- `core-interaction-contract` — the observable loop and its evidence, before architecture
+- `identity-access-decision` — the smallest identity boundary that satisfies a real reason
+- `runtime-engine-state` — when the browser or device owns the truth your UI displays
+- `continuous-media` — playback, queues, and the states a loading boolean cannot hold
+- `skills/registry.json` — generated routing table; 6 core skills, 24 conditional
+- `schemas/profile.schema.json`, `schemas/first-value.schema.json`
+- `npm run plan` — resolves the skill graph from a profile
+- `npm run test:routing` — cross-shape regression, no model required
+
+### Added — from external review
+
+- **A stop receipt.** Where a brief forks into genuinely different products, the run stops
+  and leaves `.ship/STOP.md` rather than defaulting past it. Defaulting there does not
+  resolve missing context, it converts it into code — with a paper trail that makes it look
+  decided. Depth scaling previously sent *vague* briefs to Deep mode; vagueness is now a
+  reason to spend less, and Deep is for large-and-clear only.
+- **Research agents must earn their spawn.** The fan-out was fixed at four plus a fifth. A
+  fixed fan-out is over-engineering wearing the costume of rigour, and on an ambiguous brief
+  it buys several confident interpretations of the ambiguity. Each agent now states which
+  Phase 2 decision changes based on what it finds, or is not spawned.
+- **A run budget** in `.ship/policy.json` — max agents and retries, checked at every phase
+  boundary, exceeding it writes a stop receipt.
+
+### Fixed
+
+- The vocabulary check never scanned `AGENTS.md` — the file a one-file install gets and
+  instruction-tier hosts load on every request.
+- `operator` was resolved in `CONTEXT.md` but never enforced, so the usage it warns about
+  survived in four files.
+- Routing on `state_owners` matched class names literally, so a profile written in prose
+  ("browser media engine") silently failed to select the runtime skills — a check that
+  fails open.
+
 ## [0.1.3]
 
 ### Fixed

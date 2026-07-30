@@ -1,6 +1,6 @@
 {
   "name": "ship-without-me",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Derivation-first agent skills for shipping launchable apps, plus a zero-dependency launch-readiness checker.",
   "type": "module",
   "bin": {
@@ -10,6 +10,8 @@
   "files": [
     "cli/",
     "skills/",
+    "schemas/",
+    "scripts/plan.mjs",
     "commands/",
     "docs/",
     ".claude-plugin/",
@@ -20,14 +22,17 @@
   ],
   "scripts": {
     "detect": "node cli/detect.mjs",
-    "test": "npm run lint:syntax && npm run check:skills && npm run test:detector && npm run check:adapters && npm run evals:validate",
+    "test": "npm run lint:syntax && npm run check:skills && npm run check:registry && npm run test:detector && npm run test:routing && npm run check:adapters && npm run evals:validate",
     "lint:syntax": "node --check cli/detect.mjs && node cli/detect.mjs --help > /dev/null",
     "check:skills": "node scripts/check-skills.mjs",
     "check:adapters": "node scripts/sync-adapters.mjs --check",
     "test:detector": "node scripts/test-detector.mjs",
     "evals:validate": "node scripts/run-evals.mjs validate",
     "evals:plan": "node scripts/run-evals.mjs plan --trials 3",
-    "sync": "node scripts/sync-adapters.mjs && node scripts/gen-rules-doc.mjs"
+    "sync": "node scripts/sync-adapters.mjs && node scripts/gen-rules-doc.mjs && node scripts/gen-registry.mjs",
+    "check:registry": "node scripts/gen-registry.mjs --check",
+    "test:routing": "node scripts/plan.mjs --test",
+    "plan": "node scripts/plan.mjs"
   },
   "keywords": [
     "agent-skills",

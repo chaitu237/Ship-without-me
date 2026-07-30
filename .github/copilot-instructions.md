@@ -13,9 +13,29 @@ Everything below applies to both, and to any app you touch.
 
 ---
 
+## Derive the profile first — it selects everything else
+
+Never ask "what known kind of app is this closest to?". Ask what is true about it. Six
+properties, answered before any architecture is chosen, written to `.ship/PROFILE.json`.
+
+| Property | Answers |
+|---|---|
+| **Where value happens** | one screen · a sequence · continuous interaction · a background run · between people · a physical outcome · an answered question · consumed content |
+| **Who owns the truth** | a local component · the device runtime · local storage · an app server · an external service · a human workflow · a shared live session |
+| **How time behaves** | static · request/response · transactional · continuous · real-time · scheduled · long-running · event-driven |
+| **Where content comes from** | user-created · user-owned import · generated demo · open dataset · licensed provider · external API · community · sensor |
+| **What identity boundary exists** | none · local profile · one authenticated user · shared household · workspace · multi-tenant · public anonymous |
+| **What proves it works** | the observable loop from first action to promised outcome |
+
+Two products can share a label and share no architecture. A music player and a habit
+tracker are both "personal products"; they have almost nothing in common. The properties
+separate them, the label does not.
+
 ## Decide, don't dither
 
-Every choice below has a default. Take it unless the user says otherwise.
+Every choice below has a default. Take it unless the user says otherwise — but **defaults
+marked *conditional* only apply once the profile says they exist**. Applying a conditional
+default unasked is how a local music player acquires a login screen and a tenants table.
 
 **Theme** — light or dark, committed to the edge. Light: background luminance above 0.75.
 Dark: below 0.28. Never in between; mid-grey reads as an unstyled default.
@@ -32,18 +52,42 @@ Dark: below 0.28. Never in between; mid-grey reads as an unstyled default.
 
 Derive hover/active/disabled by moving lightness. Never hand-pick a second hex.
 
-**Scope** — three modules for v1. Never six. Pick what the primary user does daily; the rest
-is v2.
+**Scope** — **one complete first-value loop** before a second destination. A product may
+have one screen, one route, or one continuous surface. *Conditional:* three modules for v1
+(never six) applies only once the profile establishes that modules exist — a work tool with
+several daily jobs. One finished loop beats three half-built ones in every shape.
 
 **Stack** — match the repo. Greenfield: Vite + React + Tailwind + shadcn/ui + lucide.
 
-**Auth** — email+password globally, phone+OTP in emerging markets. Always a demo tenant.
+**Identity** — **none until identity is required.** It is required by privacy, sharing,
+sync across devices, ownership, payment, or permissions — and by nothing else. Derive the
+boundary, then implement it: `none` → no auth at all · `local profile` → a name in local
+storage · `one user` → single credential, no tenancy · `workspace`/`multi-tenant` → the
+conditional block below. *Conditional:* email+password, phone+OTP in emerging markets, and
+a demo tenant — only at `workspace` or above.
+
+**Backend** — **none until value depends on it**: remote storage, sync, shared state,
+server-held secrets, external integrations, or central processing. A product whose truth
+lives in the device runtime and local storage is finished without one, and adding one costs
+a deploy target, a failure mode, and an offline story it did not need.
 
 ---
 
-## The spine, for any multi-module app
+## Data model — derive the nouns from the loop
 
+There is no universal schema. Name what the first-value loop actually moves:
+
+```text
+music player    Track · Queue · PlaybackSession · LibrarySource · Preference
+menu catalogue  Menu · Category · Dish · Recipe · Ingredient
+automation      Trigger · Run · Step · Attempt · Result
+repair shop     Customer · Vehicle · Job · Line · Invoice
 ```
+
+*Conditional — multi-tenant work tools only.* Where several isolated customers share
+infrastructure, a party/item/event spine earns its place:
+
+```text
 Tenant ──< User ──< Role
    │
    ├──< Party      customer | vendor | staff — ONE table, one type column
@@ -51,15 +95,20 @@ Tenant ──< User ──< Role
    └──< Event      order | job | shift | visit | payment — APPEND-ONLY
 ```
 
-`Event` is load-bearing. Every dashboard tile is a query over it. If a metric needs its
-own table, the spine is wrong.
+`Event` is load-bearing there: every dashboard tile is a query over it. `tenant_id` on
+every table, NOT NULL, FK, indexed, scoped at the data layer with a query wrapper and never
+in handlers — handlers forget, and that is the incident.
 
-`tenant_id` on every table: NOT NULL, FK, indexed. Scope at the data layer with a query
-wrapper, never in handlers — handlers forget, and that is the incident.
+Do not reach for this spine outside that shape. A `PlaybackSession` is not an `Event`, and
+forcing it into one buys a join and loses the thing that made it a session.
 
 ---
 
-## Landing page
+## Landing page — *conditional*
+
+Only when the profile says acquisition needs one: public distribution, sharing, search
+indexing, or app-store submission. A local tool, an internal dashboard, or a personal
+product does not get a marketing page, and building one is scope nobody asked for.
 
 ```
 nav → eyebrow → H1 → subhead → dual CTA → trust strip → product screenshot → features → CTA → footer
@@ -78,39 +127,116 @@ mockup. This is the clearest separator between real and template.
 
 ---
 
-## Never ship without these
+## Write the first-value contract before choosing architecture
 
-**Launch surface**
-- Real `<title>`, meta description, canonical, favicon — not a framework default
-- `og:image`, absolute URL, 1200×630 — otherwise every shared link is a blank card
-- At least one `<h1>` in the HTML **before JS runs**
-- `robots.txt` without `Disallow: /`, a branded 404, zero console errors on first paint
+`.ship/FIRST_VALUE.md`, and no architecture decision is made until every capability in it
+has a named owner and a way to prove it:
 
-**Legal**
-- `/privacy` and `/terms`, dated, linked in the footer and at signup
-- Terms checkbox unchecked by default, acceptance recorded with version and timestamp
-- Account deletion and data export routes that actually work
+```markdown
+## First-value event      the single moment the product becomes worth having
+## Starting state         what exists before the journey begins
+## Successful path        the exact observable sequence from action to value
+## Essential state owners which system is authoritative at each step
+## Failure path           the most likely failure that prevents value
+## Recovery path          how the user recovers without starting over
+## Evidence               what proves it worked
+## Non-goals              what this slice deliberately excludes
+```
 
-**Account journey** — login is one screen out of twelve
-- Signup · email verification with resend · forgot password · reset · change password
-- Change email confirmed at the new address, notified at the old
-- Session refresh in the background; never dump a user out of a half-filled form
+The path is observable steps, not features:
 
-**Every async surface**
-- Loading (skeleton, not spinner) · empty (with the action) · error (with retry)
-- No-results is a *different* state from nothing-yet
+```text
+music player   import a file → metadata shows → select → audio is audible → progress
+               advances → seek moves it → leave the screen, playback continues →
+               track ends → next one starts
+menu catalogue open menu → pick a category → find a dish → open it → see the recipe
+```
+
+And the failure path is part of the contract, not an afterthought:
+
+```text
+unsupported or corrupt file → does NOT sit in "loading" → the track name and the exact
+reason are shown → the user can remove it or pick another
+```
+
+**Evidence types** — pick per claim, cheapest that actually proves it: `command_exit` ·
+`unit_assertion` · `browser_assertion` · `network_trace` · `runtime_event_trace` ·
+`database_record` · `persisted_reload` · `visual_snapshot` · `accessibility_tree` ·
+`manual_judgement`.
+
+A green test suite that never exercised the loop is not evidence the loop works.
+
+---
+
+## The floor — every product, every shape
+
+- Boots, and the first-value loop completes end to end
+- Zero uncaught runtime errors on first paint
+- Every primary control reachable by keyboard, with a visible focus ring
+- Loading (skeleton, not spinner) · empty (with the action) · error (with retry).
+  No-results is a *different* state from nothing-yet
 - Confirm only the irreversible; prefer undo
+- The core journey works at 375px wide
+- No secrets in the repo
+- The completion state reported honestly
 
-**Forms**
+**Forms** — wherever one exists
 - Real `<label>` on every input · correct `type` and `autocomplete`
 - Validate on blur, never on keystroke · errors on the field, not only in a toast
 - Submit disabled while submitting · input preserved on failure · autosave past 8 fields
 
-**Data**
-- Tenant-A rows invisible to a tenant-B session, on every table
+## Conditional packs — each gated on a profile property
+
+Passing a pack that does not apply is not evidence of anything. Skipping one that does is
+the failure. Say in the report which packs you selected and why.
+
+**The packs below are worked examples, not the set of possibilities.** A capability with no
+pack here — 3D, on-device inference, hardware, document generation, maps, signing, protocol
+clients — is normal. Write its contract and its check yourself under `.ship/gaps/`, using
+the same discipline. **Never route a capability to the nearest pack that happens to exist**;
+that is how continuous playback becomes a table of records that never make a sound.
+
+**Public acquisition** — *distribution is public*
+- Real `<title>`, meta description, canonical, favicon — not a framework default
+- `og:image`, absolute URL, 1200×630 — otherwise every shared link is a blank card
+- At least one `<h1>` in the HTML **before JS runs**
+- `robots.txt` without `Disallow: /`, a branded 404
+
+**Legal** — *personal data is collected, or the product is public*
+- `/privacy` and `/terms`, dated, linked in the footer and at signup
+- Terms checkbox unchecked by default, acceptance recorded with version and timestamp
+- Account deletion and data export routes that actually work
+
+**Account journey** — *identity is one authenticated user or above*; login is one screen
+out of twelve
+- Signup · email verification with resend · forgot password · reset · change password
+- Change email confirmed at the new address, notified at the old
+- Session refresh in the background; never dump a user out of a half-filled form
+
+**Server data** — *truth lives on an app server*
 - Every list endpoint paginated, server-side, from the first commit
-- Money as integer minor units · timestamps as UTC `TIMESTAMPTZ`
-- `/health` that actually touches the database
+- Timestamps as UTC `TIMESTAMPTZ` · `/health` that actually touches the database
+
+**Tenancy** — *multi-tenant*
+- Tenant-A rows invisible to a tenant-B session, on every table
+
+**Money** — *the product moves money*
+- Integer minor units, never float. Percentages as basis points
+
+**Continuous media** — *time is continuous and the runtime owns playback*
+- Play makes the engine actually play; pause keeps UI and engine agreed
+- Progress advances; seek moves position; ended follows the queue policy
+- An unsupported source leaves the loading state and names the failure
+- Navigating between screens does not silently kill playback
+
+**Device runtime** — *truth lives in the browser or device*
+- The runtime adapter is the single authority; UI subscribes to snapshots
+- Engine ticks do not re-render the whole app
+- Permission denied and source-unavailable are real, rendered states
+
+**Local files** — *content is a user-owned import*
+- Supported file accepted; unsupported rejected with the reason
+- Storage survives reload; revoked handles recoverable; large files never freeze the UI
 
 ---
 

@@ -67,7 +67,11 @@ for (const slug of dirs.sort()) {
   // ── things that must never appear ──
   if (/!\[[^\]]*\]\(/.test(body)) err(slug, 'contains an image — skills are text only')
   // Orchestrators implement a full protocol and legitimately run longer than a domain skill.
-  const cap = /^ship-with(out)?-me$/.test(slug) ? 750 : 230
+  // Raised 750 → 900 when the unattended orchestrator gained the stop receipt, the run
+  // budget, and profile-driven skill selection. Everything reusable was extracted first
+  // (product-profile, core-interaction-contract). If it grows again, extract — do not raise
+  // this a second time, or the cap stops being a constraint and becomes a record.
+  const cap = /^ship-with(out)?-me$/.test(slug) ? 900 : 230
   const lines = body.split('\n').length
   if (lines > cap) warn(slug, `${lines} lines (cap ${cap}) — likely two skills, or a catalogue crept in`)
 }

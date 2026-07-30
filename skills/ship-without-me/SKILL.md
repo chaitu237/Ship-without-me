@@ -14,8 +14,13 @@ Three things, and only three: every decision is defaulted rather than invented, 
 decision is written down with its reason, and every claim of "done" is a command that
 exited zero. Remove any one and this is a black box that produces a plausible-looking app.
 
-**You may not ask questions.** No `AskUserQuestion`, no "which would you prefer", no
-stopping to confirm. Every decision below has a default. Take it, log it, keep moving.
+**You may not ask about preferences.** No `AskUserQuestion`, no "which would you prefer",
+no stopping to confirm a choice that has a default. Take it, log it, keep moving.
+
+**One exception, and it is not a preference.** Where the brief forks into genuinely
+different products, no default is safe — picking one silently spends the entire run on a
+coin flip and dresses it as a decision. There you stop and leave a resumable receipt. That
+is not asking permission; it is refusing to manufacture an answer you do not have.
 
 ---
 
@@ -35,21 +40,75 @@ What is actually being asked?
 │         three approaches, pick one, build it, verify the core path and the
 │         important failure paths. Skip the research phases.
 │
-└─ A new app, a rebuild, a multi-role system, anything data-heavy or
-   security-sensitive, or a brief vague enough that the real problem is unclear
-     └─► DEEP. Everything below.
+├─ A new app, a rebuild, a multi-role system, anything data-heavy or
+│  security-sensitive — where the goal is clear and the work is large
+│    └─► DEEP. Everything below.
+│
+└─ So vague that two competent readers would build different products
+     └─► STOP. Write a stop receipt. Do not escalate.
 ```
 
+**Vagueness is a reason to spend less, not more.** Scaling depth by uncertainty is exactly
+backwards: it multiplies one unclear request into several confidently-researched
+interpretations of it, and the cost of being wrong scales with everything you spent getting
+there. Deep mode is for **large and clear**, never for **unclear**.
+
 **Start at the lightest mode that can safely produce a correct result.** Escalate only when
-ambiguity, risk, dependencies, or blast radius justify it — and when you escalate, log why.
+size, risk, dependencies, or blast radius justify it — and when you escalate, log why.
 
 Everything from Phase 0 onward is Deep mode.
+
+### The stop receipt — what to do instead of defaulting past a fork
+
+Not every unknown deserves this. Most do not: an unresolved *preference* gets a default and
+a log line, which is the whole promise of an unattended run. The test is different:
+
+```
+If this assumption is wrong, what is lost?
+├─ a token, a label, one screen — reversible in minutes ─► default it, log it, continue
+├─ a phase of work, rebuilt cheaply ─────────────────────► default it, log it, flag in report
+└─ the whole run, or something outside the repo changes ─► STOP RECEIPT
+     · which product was meant, when the brief describes two
+     · whose data this is, when it might be real
+     · which of two incompatible readings of the core job is right
+     · anything the policy file already forbids
+```
+
+`.ship/STOP.md`, and then exit:
+
+```markdown
+## Stopped at        phase, and what triggered it
+## The fork          the two or more readings, stated fairly
+## What each implies the different product each produces
+## Cost so far       what has been spent, and what is already reusable
+## To resume         the single answer needed, and the command to continue
+```
+
+**A stop receipt is a success, not a failure.** It costs one question and preserves
+everything already done. A confidently-built wrong product costs the entire run, and its
+decisions log makes it *look* considered — which is worse than looking unfinished.
+
+### Budget the run before starting it
+
+Unattended means nobody is watching the meter. Set a ceiling in `.ship/policy.json` and
+check it at every phase boundary:
+
+```json
+"budget": { "max_agents": 12, "max_phase_retries": 2, "on_exceed": "stop receipt" }
+```
+
+On exceeding it, write the stop receipt and stop. Do not silently continue, and do not
+quietly drop scope to fit — say which it was.
 
 ---
 
 ## The contract
 
-1. **Never ask.** Unresolvable decision → take the default, log low confidence, continue.
+1. **Never ask about preferences — stop on forks.** An unresolved *preference* takes the
+   default, logs low confidence, and continues; that is the promise. A fork where being
+   wrong costs the whole run gets a stop receipt instead. Defaulting past one of those does
+   not resolve the missing context, it converts it into code — and a documented assumption
+   is still an assumption, now with a paper trail that makes it look decided.
 2. **Write every decision down before acting on it.** `.ship/DECISIONS.md`.
 3. **Commit after every phase.** Each phase must be inspectable and revertible.
 4. **Hard stops are policy, not vibes.** Write `.ship/policy.json` in phase 0 and check
@@ -137,6 +196,20 @@ Who benefits, and from what?
 If two shapes apply, the product is two products. Pick the one that carries the first
 value event and log the other as Not now.
 
+**The shape frames the product. It does not choose the architecture.** A music player and
+a habit tracker are both PERSONAL PRODUCT and share almost no technical requirement. Eight
+labels cannot carry that, and a label is exactly the kind of category this skill is not
+allowed to branch on. Derive the properties.
+
+### 0b-ii. Derive the product profile — this is what selects the build
+
+Invoke **`product-profile`**. It derives six properties of this situation, writes
+`.ship/PROFILE.json`, and resolves the capability map — including the capabilities nothing
+here covers, which become gaps rather than improvisations.
+
+The output drives Phase 2's skill graph and Phase 4's verification packs. Do not proceed
+past it with an essential capability unowned.
+
 ### 0c. Write the provisional brief
 
 `.ship/BRIEF.md`. Provisional means *usable now and expected to be wrong somewhere* — not
@@ -199,12 +272,34 @@ a different definition of done. The left side is countable. The right side is th
 **Apply this to whatever the brief actually is.** These are the shape of the reframe, not a
 lookup table — if the request is none of the above, the pattern still holds.
 
-## Phase 1 — Research (4 parallel subagents)
+## Phase 1 — Research (each agent earns its own existence)
 
 You are building for a domain you may know nothing about. **Research the subject, not just
 the software.** A perfectly-built app for a trade you misunderstood is worthless.
 
-Spawn four agents. They never talk to each other; they write files and exit.
+### Every agent must justify itself before it is spawned
+
+A fixed fan-out is over-engineering wearing the costume of rigour. Four agents on a
+well-understood request buys four documents nobody reads, at four times the cost — and if
+the brief was ambiguous, it buys four confident interpretations of the ambiguity, which is
+worse than one.
+
+```
+For each candidate agent, answer in one line:
+├─ What decision in Phase 2 changes depending on what it finds?
+│    └─ none ─────────────────────────► do not spawn it
+├─ Can I already answer it from the repo, the brief, or what I know?
+│    └─ yes ──────────────────────────► answer it inline, do not spawn
+└─ Is its evidence independent of the others?
+     └─ no, it would re-read the same sources ─► fold it into that agent
+```
+
+Log the roster and the ones you dropped. Typical outcomes: a familiar domain with a clear
+brief needs one agent or none; a regulated trade nobody here knows needs the full set. **If
+every run spawns the same number of agents, the question is not being asked.**
+
+The four below are the candidates, not a quota. They never talk to each other; they write
+files and exit.
 
 | Agent | Writes | Must establish |
 |---|---|---|
@@ -213,7 +308,7 @@ Spawn four agents. They never talk to each other; they write files and exit.
 | **leverage** | `.ship/research/LEVERAGE.md` | what already exists that can be reused — see the ladder below |
 | **design** | `.ship/research/DESIGN.md` | theme, accent hue, layout archetype |
 
-Then a fifth, **after** the others land, because it reads their output:
+Then, **only if any of the above ran**, a risk pass that reads their output:
 
 | Agent | Writes | Must establish |
 |---|---|---|
@@ -362,22 +457,80 @@ Switch condition: the specific observation that would make us change
 **Never leave this undecided.** An undifferentiated list is not a decision — it is
 responsibility avoided. You are the one here; choose.
 
-### 2b. Define the smallest complete vertical slice
+### 2b. Write the first-value contract, then the slice around it
 
-Not "three modules". A slice that works end to end and can be observed working:
+Invoke **`core-interaction-contract`** and write `.ship/FIRST_VALUE.md`. **No architecture
+is chosen until every capability in it has a named owner and a way to prove it.**
+
+It holds the first-value event, the starting state, the observable successful path, the
+authoritative state owner at each step, the likeliest failure and its recovery, the evidence
+for each claim, and the non-goals. The path is steps someone could watch, not a feature
+list, and the failure path is part of the contract rather than an afterthought.
+
+Then the slice is whatever carries that contract end to end — **not "three modules".**
+Some products have one screen and are complete. The generic list below is a *work-tool*
+slice; take from it only what the profile says exists:
 
 ```
 one user role · one real problem · one complete journey · one data source
-· one backend path · one usable interface · one validation mechanism
-· one observable success event · one failure and recovery path · instrumentation
-```
-
-```
-input → validate → transform → store → retrieve → display → user acts → feedback → correct
+· one usable interface · one validation mechanism · one observable success event
+· one failure and recovery path · instrumentation
 ```
 
 **The slice should answer the largest unresolved question with the least irreversible
 investment.** If it does not resolve anything, it is a demo, not a slice.
+
+### 2b-ii. Resolve the skill graph from the profile — do not run a fixed pipeline
+
+Every product gets the core. Everything else is earned by a property being true.
+
+```text
+CORE — always
+  inspect existing assets → derive profile → first-value contract → capability gaps
+  → minimum architecture → design-system-commit → layout-patterns
+  → accessibility floor → states-and-feedback → build → verify the loop → honest handoff
+```
+
+**The branch rule, which is the part that generalizes:**
+
+> A branch is selected when a **property of this situation** is true — never because the
+> product resembles one you have seen. If no branch matches a capability the contract needs,
+> that is a capability gap, not a reason to pick the closest branch.
+
+```text
+CONDITIONAL — worked examples of the rule, NOT the set of possibilities
+
+identity_model != none            → identity-access-decision
+identity_model >= workspace       → tenant-auth-demo · account-lifecycle
+persistence_model == server       → database-schema · backend-api-design
+state_owner == device runtime     → runtime-engine-state
+time_model == continuous          → core-interaction-contract (+ continuous-media if A/V)
+content_source is imported        → local file ingestion · content rights
+collections or search exist       → search and discovery · list-and-table
+the product moves money           → payments-billing
+it runs unattended                → background jobs and automation
+distribution is public            → landing-composition · ship-ready-audit
+it is local, internal, or private → skip landing and SEO entirely
+value is a decision from data     → analytical decision surface
+work tool whose value IS records  → vertical-business-os
+```
+
+**This list is illustrative and it is incomplete on purpose.** Products need capabilities
+nobody enumerated — 3D and WebGL, on-device inference, serial and USB hardware, document
+generation, spatial and map surfaces, cryptographic signing, simulation loops, accessibility
+tooling, protocol clients. A capability with no branch here is **normal**, and it routes to
+the gap protocol in 0b-iii. It does not route to the nearest branch that happens to exist.
+
+The failure this prevents: a product whose value is continuous, device-owned playback being
+routed through `database-schema` and `vertical-business-os` because those branches exist and
+a media branch did not — producing a CRUD list of records that never make a sound.
+
+**`vertical-business-os` is never in the default path.** It is for a work tool whose value
+genuinely is the operational record. Routing a music player or a notes app through it
+produces a CRUD system wearing the wrong product's clothes.
+
+Log the selected packs and, more importantly, **the ones you skipped and why**. A skipped
+pack is a decision, and an unexplained skip is indistinguishable from an oversight.
 
 ### 2c. Write the decisions
 
@@ -438,42 +591,47 @@ No gradient unless the brief asks for one.
 **Stack** — match the repo if one exists. Greenfield default: Vite + React + Tailwind +
 shadcn/ui + lucide icons. Do not negotiate frameworks with yourself.
 
-**Scope** — **three modules for v1. Never six.** Pick the three the primary user does daily.
-Everything else goes in `.ship/ROADMAP.md` as v2.
+**Scope** — **one complete first-value loop** before any second destination. Everything
+else goes in `.ship/ROADMAP.md` as v2. *Only where the profile says modules exist* — a work
+tool with several daily jobs — does this become three modules for v1, never six.
 
-**Auth** — email + password for global/B2B. Phone + OTP for emerging markets. Always
-a demo tenant with seeded roles.
+**Identity** — **none until something requires it**: privacy, sharing, sync across devices,
+ownership, payment, or permissions. Then the smallest boundary that satisfies the reason —
+a local profile before a single account, a single account before a workspace, a workspace
+before tenancy. *Only at workspace or above:* email+password (phone+OTP in emerging
+markets) and a seeded demo tenant.
 
-**Layout** — centered hero for the public landing, split-screen for auth, sidebar shell
-for the logged-in app.
+**Persistence** — the profile's state owner decides. Device runtime or local storage → no
+server, and the product is finished without one. A backend is earned by remote storage,
+sync, shared state, server-held secrets, external integrations, or central processing.
+
+**Layout** — derived from what the user is doing, per `layout-patterns`. *Conditional:*
+centered hero only where there is a public landing, split-screen only where there is auth,
+sidebar shell only where there are modules to move between. A product with one continuous
+surface gets none of the three.
 
 ## Phase 3 — Build
 
-Run these in dependency order. Each in a fresh context. Invoke the skill named.
+Run the graph **you resolved in 2b-ii**, in dependency order, each in a fresh context.
+This is not a pipeline every product walks — it is a core plus the branches the profile
+turned on.
 
 ```
-FOUNDATION   design-system-commit → layout-patterns
-                  │
-DATA         database-schema → backend-api-design → tenant-auth-demo
-                  │                                       │
-                  │                                 account-lifecycle
-CLIENT       frontend-architecture ─┬─► app-shell-composition
-                  │                 ├─► list-and-table
-                  │                 ├─► forms-and-validation
-                  │                 ├─► states-and-feedback
-                  │                 └─► landing-composition
-                  │
-DOMAIN       vertical-business-os · grounded-ai-feature
-                  │
-LAUNCH       legal-and-consent → ship-ready-audit
-                  → deployment-hardening → deploy-durability
-
-   conditional: regional-commerce-stack · field-ops-mobile
+CORE — always
+  design-system-commit → layout-patterns → frontend-architecture
+        → states-and-feedback → [the capability branches] → verify the loop
 ```
 
-Order matters. Tokens and layout before components. Schema before API before auth. Never
-build a screen against an API that does not exist yet — you will design the API around
-the screen and get the data model wrong.
+Then the branches **you selected in 2b-ii** — that list lives there and only there, so the
+two cannot drift apart.
+
+Order matters inside a branch. Tokens and layout before components. Where there *is* a
+server: schema before API before auth — never build a screen against an API that does not
+exist yet, or you will design the API around the screen and get the data model wrong.
+
+**Where there is no server, none of that applies and none of it gets built.** A product
+whose truth lives in the device runtime goes foundation → runtime ownership → the loop.
+Inserting a schema phase there invents a database to hold state something else already owns.
 
 ### Every phase runs three roles, in this order
 

@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/chaitu237/Ship-without-me/schemas/profile.schema.json",
+  "title": "Product profile",
+  "description": "Properties of a specific product that determine how it must be built. Derived with the product-profile skill, written to .ship/PROFILE.json. Enumerations are open: an unlisted value is a capability gap, not an error.",
+  "type": "object",
+  "required": [
+    "first_value_event",
+    "value_location",
+    "state_owners",
+    "time_model",
+    "content_source",
+    "identity_model",
+    "persistence_model",
+    "core_capabilities"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "first_value_event": {
+      "type": "string",
+      "minLength": 12,
+      "description": "The single moment this product becomes worth having, as an observable event."
+    },
+    "value_location": {
+      "type": "string",
+      "examples": [
+        "one screen",
+        "a sequence",
+        "continuous interaction",
+        "a background run",
+        "between people",
+        "a physical outcome",
+        "an answered question",
+        "consumed content"
+      ]
+    },
+    "state_owners": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      },
+      "description": "Which system is authoritative. Prefer the class name \u2014 'a local component', 'the device runtime', 'local persistent storage', 'an app server', 'an external service', 'a human workflow', 'a shared live session' \u2014 optionally with detail after it ('the device runtime (audio element)'). Routing normalises concrete nouns onto these classes, but the class name is what makes selection unambiguous. Two owners for one value means one is a cache \u2014 say which.",
+      "examples": [
+        [
+          "the device runtime (audio element)",
+          "local persistent storage"
+        ],
+        [
+          "an app server"
+        ]
+      ]
+    },
+    "time_model": {
+      "type": "string",
+      "examples": [
+        "static",
+        "request/response",
+        "transactional",
+        "continuous",
+        "real-time",
+        "scheduled",
+        "long-running",
+        "event-driven"
+      ]
+    },
+    "content_source": {
+      "type": "string",
+      "examples": [
+        "user-created",
+        "user-owned import",
+        "generated demo",
+        "open dataset",
+        "licensed provider",
+        "external API",
+        "community contributed",
+        "sensor or device"
+      ]
+    },
+    "identity_model": {
+      "type": "string",
+      "description": "The smallest boundary satisfying a named reason. Derived with identity-access-decision.",
+      "examples": [
+        "none",
+        "local profile",
+        "one authenticated user",
+        "shared household",
+        "workspace",
+        "multi-tenant",
+        "public anonymous"
+      ]
+    },
+    "persistence_model": {
+      "type": "string",
+      "examples": [
+        "none",
+        "local",
+        "server",
+        "hybrid"
+      ]
+    },
+    "connectivity_model": {
+      "type": "string",
+      "examples": [
+        "online-only",
+        "offline-capable",
+        "offline-first"
+      ]
+    },
+    "distribution": {
+      "type": "string",
+      "description": "Public distribution is what earns a landing page and SEO. Anything else does not get one.",
+      "examples": [
+        "private",
+        "internal",
+        "public",
+        "app store",
+        "cli"
+      ]
+    },
+    "criticality": {
+      "type": "string",
+      "description": "Reversible work passes at 'usually succeeds'. Irreversible work must succeed every trial.",
+      "examples": [
+        "reversible",
+        "irreversible"
+      ]
+    },
+    "core_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      },
+      "description": "What the product must DO, never what it is about. 'audio playback', not 'music'. Each entry must map to existing code, a selected skill, or a file under .ship/gaps/.",
+      "examples": [
+        [
+          "file import",
+          "audio playback",
+          "queue management",
+          "playback persistence"
+        ]
+      ]
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Capabilities no available skill covers. Normal, and reportable. Each has a contract under .ship/gaps/."
+    }
+  }
+}
