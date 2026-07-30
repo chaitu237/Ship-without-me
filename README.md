@@ -13,9 +13,13 @@ Most AI-built apps work and still are not launchable. Blank link previews. Defau
 titles. No privacy page. A demo login that leaks. An "AI feature" that is a text box.
 A form that loses twenty minutes of typing on a validation error.
 
-This closes that gap two ways: **27 agent skills** that decide correctly instead of listing
+This closes that gap two ways: **32 agent skills** that decide correctly instead of listing
 options, and **`ship detect`** — a launch-readiness checker with no model, no API key, and
 no dependencies.
+
+Six of those skills run for every product. The other 26 are selected by what is true about
+*this* product — so a local music player does not get a login screen, a database, and a
+marketing page it never needed.
 
 ---
 
@@ -28,7 +32,7 @@ no dependencies.
 /plugin install ship@ship-without-me
 ```
 
-Then `/ship-without-me`, `/ship-with-me`, and `/ship-check` are available, and the 25
+Then `/ship-without-me`, `/ship-with-me`, and `/ship-check` are available, and the 30
 supporting skills load on demand.
 
 ### Any agent that reads `AGENTS.md`
@@ -80,7 +84,7 @@ npx ship-without-me detect --help
 ```
 
 That should print the rule groups. In an agent, ask it to *"list the ship skills you can
-see"* — you should get 27.
+see"* — you should get 32.
 
 ## The two ways to build
 
@@ -171,12 +175,23 @@ Exit codes: `0` clean · `1` failures · `2` nothing to check. Full rule referen
 
 Each is a folder under [`skills/`](skills/) containing a single `SKILL.md`.
 
+Six run for every product. The rest are gated on a property of the profile — `npm run plan`
+shows which, for any profile.
+
 **Orchestrators**
 
 | Skill | Answers |
 |---|---|
 | `ship-without-me` | The user cannot correct me — what makes this run trustworthy? |
 | `ship-with-me` | What can I determine alone, and what genuinely requires this person? |
+
+**Deciding what to build at all**
+
+| Skill | Answers |
+|---|---|
+| `product-profile` | What is true about *this* product that determines how it must be built? |
+| `core-interaction-contract` | What observable sequence proves this works, and what proves each step? |
+| `identity-access-decision` | Does this need to know who the user is, and what is the smallest boundary? |
 
 **Design and frontend**
 
@@ -185,6 +200,8 @@ Each is a folder under [`skills/`](skills/) containing a single `SKILL.md`.
 | `design-system-commit` | What must be identical across every screen to read as one product? |
 | `layout-patterns` | What is the user *doing* on this screen? |
 | `frontend-architecture` | For each piece of state — who owns it, who needs it, what changes? |
+| `runtime-engine-state` | When a runtime holds the truth, what may the UI remember? |
+| `continuous-media` | What does the user believe while media plays, and is it true? |
 | `app-shell-composition` | What stays put between modules, and what may each module decide? |
 | `landing-composition` | What claim does this page make, and what proves it? |
 
@@ -277,7 +294,7 @@ half-finished screens.
 No re-arguing, no quietly reverting mid-build.
 
 **Descriptions are the only thing on the hot path.** Skill bodies load on demand;
-descriptions do not. All 25 are held under ~250 characters, which keeps the always-loaded
+descriptions do not. All are held under ~250 characters, which keeps the always-loaded
 cost near 1,200 tokens instead of 2,500.
 
 ---
@@ -285,7 +302,8 @@ cost near 1,200 tokens instead of 2,500.
 ## Repository layout
 
 ```text
-skills/               27 skill folders, one SKILL.md each
+skills/               32 skill folders, one SKILL.md each
+  registry.json       generated routing table — which property turns each skill on
   AUTHORING.md        the standard every skill is held to, enforced in CI
   <skill>/eval/       cases.jsonl — what the skill claims, made testable
 cli/detect.mjs        the checker: 51 rules, zero dependencies
@@ -296,7 +314,8 @@ docs/
   portability.md      which hosts get what, and how to add another
   evaluation.md       how a skill's claim is measured
 AGENTS.md             the portable ruleset — read automatically by a dozen agents
-CONTEXT.md            shared vocabulary, so 27 skills cannot drift apart
+CONTEXT.md            shared vocabulary, so the skills cannot drift apart
+schemas/              profile and first-value contract, as JSON Schema
 .claude-plugin/       Claude Code plugin + marketplace manifests
 .codex-plugin/  gemini-extension.json
 .cursor/ .clinerules/ .kiro/ .windsurf/ .github/   per-host rule files, generated
