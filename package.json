@@ -1,6 +1,6 @@
 {
   "name": "ship-without-me",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Derivation-first agent skills for shipping launchable apps, plus a zero-dependency launch-readiness checker.",
   "type": "module",
   "bin": {

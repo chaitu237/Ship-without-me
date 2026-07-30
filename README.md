@@ -88,7 +88,7 @@ see"* — you should get 27.
 
 You give a prompt and leave.
 
-```
+```text
 /ship-without-me a job-tracking app for a car repair shop
 ```
 
@@ -117,7 +117,7 @@ is the right thing means polishing work you are about to throw away.
 
 You have references and want a say.
 
-```
+```text
 /ship-with-me build something like this   [screenshot.png]   [competitor.com]
 ```
 
@@ -142,7 +142,7 @@ npx ship-without-me detect --json                # for CI
 npx ship-without-me detect --strict              # warnings fail too
 ```
 
-```
+```text
 ship detect  repo · https://example.com
 
   ✗ default-title           <title> is the framework default: "React App"
@@ -217,15 +217,15 @@ Each is a folder under [`skills/`](skills/) containing a single `SKILL.md`.
 |---|---|
 | `ship-ready-audit` | What does the world see before JavaScript runs? |
 | `deployment-hardening` | What changes when a stranger depends on this? |
-| `deploy-durability` | What differs between the machine where it works and the one where it doesn't? |
+| `deploy-durability` | What differs between where it works and where it doesn't? |
 
 **Situational**
 
 | Skill | Answers |
 |---|---|
-| `initial-content-bootstrap` | Where does the first useful content come from, and what makes it trustworthy? |
-| `rescue-existing-project` | What is actually true about this codebase, versus what it claims? |
-| `regional-commerce-stack` | What is non-negotiable in this market — by law, or by user reality? |
+| `initial-content-bootstrap` | Where does the first content come from, and why trust it? |
+| `rescue-existing-project` | What is true about this codebase, versus what it claims? |
+| `regional-commerce-stack` | What is non-negotiable here — by law, or by user reality? |
 | `field-ops-mobile` | What can this user do, given the device, hands, light, and signal? |
 
 ---
@@ -235,7 +235,7 @@ Each is a folder under [`skills/`](skills/) containing a single `SKILL.md`.
 A skill that catalogues has not generalized. It tells an agent what exists, not how to
 decide, and it collapses on the first case its author did not see.
 
-```
+```text
 ✗  "Here are eight hero variants. Pick one."
 
 ✓  "The hero visual is the evidence for the headline's claim.
@@ -284,7 +284,7 @@ cost near 1,200 tokens instead of 2,500.
 
 ## Repository layout
 
-```
+```text
 skills/               27 skill folders, one SKILL.md each
   AUTHORING.md        the standard every skill is held to, enforced in CI
   <skill>/eval/       cases.jsonl — what the skill claims, made testable

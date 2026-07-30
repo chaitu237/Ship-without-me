@@ -12,6 +12,17 @@ All notable changes to this project are documented here. Format follows
   self-tested against fixtures; the `/ship-with-me` interview and the wave pipeline are not
   yet exercised. Treat `0.1.0` as pre-release until they are.
 
+## [0.1.2]
+
+### Fixed
+
+- README formatting standardized: every code fence carries a language tag, no line over
+  96 characters except badge URLs (a shields.io token cannot be wrapped), no trailing
+  whitespace, one `h1`, seven tables all using the same separator style, and every local
+  link verified to resolve.
+- The CI badge linked via a GitHub-relative path, which resolves on github.com but breaks
+  anywhere else the README is rendered. Absolute URL now.
+
 ## [0.1.1]
 
 ### Fixed
