@@ -45,15 +45,45 @@ from `AGENTS.md`, so they never disagree with it. See
 
 ### The checker, with no agent at all
 
-```bash
-npx ship-without-me detect --url https://your-app.com
-```
-
-Or from a clone, with nothing installed — it has zero dependencies:
+**From a clone — nothing to install, no account, no token.** This is the path with the
+fewest moving parts, and it works because the checker has zero dependencies:
 
 ```bash
 git clone https://github.com/chaitu237/Ship-without-me.git
 node Ship-without-me/cli/detect.mjs --url https://your-app.com
+```
+
+**From GitHub Packages.** Published releases live there. GitHub Packages requires
+authentication even for public packages, so this needs a one-time setup:
+
+```bash
+# once — a classic token with read:packages scope
+npm login --scope=@chaitu237 --auth-type=legacy --registry=https://npm.pkg.github.com
+
+npx @chaitu237/ship-without-me detect --url https://your-app.com
+```
+
+Or add the scope mapping to your project so `npm install` resolves it:
+
+```
+# .npmrc
+@chaitu237:registry=https://npm.pkg.github.com
+```
+
+Put the token in your **home** `~/.npmrc`, never in a committed one.
+
+**In CI**, no token is needed if the workflow runs in a repository with package read
+access — `GITHUB_TOKEN` is enough:
+
+```yaml
+- uses: actions/setup-node@v4
+  with:
+    node-version: 20
+    registry-url: https://npm.pkg.github.com
+    scope: '@chaitu237'
+- run: npx @chaitu237/ship-without-me detect --strict
+  env:
+    NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### Codex and Gemini CLI
@@ -66,7 +96,7 @@ at the clone; both read `skills/` directly.
 ## Verify it installed
 
 ```bash
-npx ship-without-me detect --help     # should print the rule groups
+node cli/detect.mjs --help     # from a clone: should print the rule groups
 ```
 
 In an agent, ask it to *"list the ship skills you can see"* — you should get 27.
@@ -122,11 +152,11 @@ your brand colour is.
 A deterministic checker. 51 rules, zero dependencies, runs in about a second.
 
 ```bash
-npx ship-without-me detect                       # auto-detects the repo and the URL
-npx ship-without-me detect --url https://…       # check a deployed site
-npx ship-without-me detect --rules launch,api    # one group
-npx ship-without-me detect --json                # for CI
-npx ship-without-me detect --strict              # warnings fail too
+npx @chaitu237/ship-without-me detect                       # auto-detects the repo and the URL
+npx @chaitu237/ship-without-me detect --url https://…       # check a deployed site
+npx @chaitu237/ship-without-me detect --rules launch,api    # one group
+npx @chaitu237/ship-without-me detect --json                # for CI
+npx @chaitu237/ship-without-me detect --strict              # warnings fail too
 ```
 
 ```

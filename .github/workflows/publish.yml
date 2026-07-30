@@ -1,0 +1,56 @@
+name: Publish
+
+# Publishes to GitHub Packages when a release is created.
+#
+# Uses GITHUB_TOKEN, not a personal access token. The token is minted for this run,
+# scoped to this repository, and expires when the job ends — so nobody has to create,
+# store, or rotate a publishing credential.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@chaitu237'
+
+      # Never publish something that does not pass its own checks.
+      - name: Verify before publishing
+        run: |
+          node --check cli/detect.mjs
+          node scripts/check-skills.mjs
+          node scripts/test-detector.mjs
+          node scripts/sync-adapters.mjs --check
+          node scripts/run-evals.mjs validate
+
+      - name: Refuse if the release tag and package version disagree
+        if: github.event_name == 'release'
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          TAG=${GITHUB_REF_NAME#v}
+          if [ "$PKG" != "$TAG" ]; then
+            echo "::error::package.json is $PKG but the tag is $TAG"
+            exit 1
+          fi
+          echo "version $PKG matches tag $TAG"
+
+      - name: Confirm the tarball contents
+        run: npm pack --dry-run
+
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

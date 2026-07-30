@@ -9,7 +9,7 @@ behaviour; everything host-specific is a thin adapter pointing back at them.
 |---|---|---|
 | **Plugin** | Skills, slash commands, hooks | native plugin manifest |
 | **Instruction** | The ruleset and checklists, no slash commands | `AGENTS.md` at the repo root |
-| **CLI** | The 51 deterministic rules | `npx ship-without-me detect` — no agent at all |
+| **CLI** | The 51 deterministic rules | `npx @chaitu237/ship-without-me detect` — no agent at all |
 | **Manual** | Everything | read `skills/*/SKILL.md` directly |
 
 ## Hosts
@@ -25,7 +25,7 @@ behaviour; everything host-specific is a thin adapter pointing back at them.
 | Cline | Instruction | `.clinerules/ship.md` |
 | Kiro | Instruction | `.kiro/steering/ship.md` |
 | Zed · Amp · Jules · Junie · Antigravity | Instruction | `AGENTS.md` from the repo root |
-| Any CI, any repo | CLI | `npx ship-without-me detect` |
+| Any CI, any repo | CLI | `npx @chaitu237/ship-without-me detect` |
 
 ## `AGENTS.md` is the highest-leverage file here
 

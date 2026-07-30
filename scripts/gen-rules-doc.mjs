@@ -30,10 +30,10 @@ Generated from \`cli/detect.mjs\` by \`scripts/gen-rules-doc.mjs\`. Do not edit 
 **${rules.size} rules across ${groupNames.length} groups.**
 
 \`\`\`bash
-npx ship-without-me detect                          # auto-detect what to check
-npx ship-without-me detect --rules <group>[,<group>]
-npx ship-without-me detect --json                   # machine-readable, for CI
-npx ship-without-me detect --strict                 # warnings fail the build too
+npx @chaitu237/ship-without-me detect                          # auto-detect what to check
+npx @chaitu237/ship-without-me detect --rules <group>[,<group>]
+npx @chaitu237/ship-without-me detect --json                   # machine-readable, for CI
+npx @chaitu237/ship-without-me detect --strict                 # warnings fail the build too
 \`\`\`
 
 Groups: ${groupNames.map(g => '`' + g + '`').join(' · ')}
