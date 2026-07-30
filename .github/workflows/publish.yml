@@ -2,10 +2,18 @@ name: Publish
 
 # Publishes to npm when a release is created.
 #
-# Authenticates by OIDC trusted publishing: npm verifies this workflow's identity directly
-# from GitHub's token service, so there is no NPM_TOKEN to create, store, or rotate, and no
-# long-lived credential that can leak. Enable it once at
-# npmjs.com → the package → Settings → Trusted publishing.
+# Two ways to authenticate. The workflow picks whichever is configured.
+#
+#   1. OIDC trusted publishing (preferred). npm verifies this workflow's identity directly
+#      from GitHub, so there is no credential to create, store, or rotate and nothing
+#      long-lived that can leak. Enable once: npmjs.com → package → Settings →
+#      Trusted publishing → add this repo and this workflow file.
+#
+#   2. An NPM_TOKEN repository secret. Simpler to start, but it is a long-lived credential
+#      that has to be rotated and can be exfiltrated by anything that runs in CI.
+#      Use an Automation token, never a token with more scope than publish.
+#
+# If the secret is absent, OIDC is used. A token in a local .env is read by nothing.
 
 on:
   release:
@@ -19,6 +27,10 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # The secrets context is not dependable inside a step-level `if:`, so resolve it once
+    # here into a plain env value the steps can test.
+    env:
+      HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -54,5 +66,20 @@ jobs:
       - name: Use an npm that supports OIDC
         run: npm install -g npm@latest
 
-      - name: Publish
+      - name: Say which credential path is in use
+        run: |
+          if [ "$HAS_NPM_TOKEN" = "true" ]; then
+            echo "publishing with the NPM_TOKEN secret"
+          else
+            echo "publishing by OIDC trusted publishing (no stored credential)"
+          fi
+
+      - name: Publish with the NPM_TOKEN secret
+        if: env.HAS_NPM_TOKEN == 'true'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish by OIDC trusted publishing
+        if: env.HAS_NPM_TOKEN != 'true'
         run: npm publish --access public

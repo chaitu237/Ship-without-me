@@ -108,14 +108,24 @@ npx ship-without-me detect --help
 
 ## Releasing
 
-Publishing runs in CI on a GitHub release and authenticates by **OIDC trusted publishing** —
-npm verifies the workflow's identity directly from GitHub, so there is no `NPM_TOKEN` to
-create, store, or rotate, and no long-lived credential that can leak.
+Publishing runs in CI on a GitHub release. Two credential paths; the workflow uses whichever
+is configured, and prints which one it took.
 
-One-time setup: npmjs.com → the package → Settings → Trusted publishing → add this
-repository and `.github/workflows/publish.yml`.
+**Preferred — OIDC trusted publishing.** No credential exists to leak or rotate. One-time
+setup at npmjs.com → the package → Settings → Trusted publishing → add this repository and
+`.github/workflows/publish.yml`.
 
-Then per release:
+**Alternative — an `NPM_TOKEN` secret.** Simpler to start, but it is long-lived and anything
+running in CI can read it. Use an **Automation** token with publish access only:
+
+```bash
+gh secret set NPM_TOKEN --repo chaitu237/Ship-without-me
+```
+
+That prompts for the value. Do not put it in a file in the repo — a token in `.env` is read
+by nothing and only creates a leak you have to remember to avoid.
+
+Per release:
 
 1. Bump `version` in `package.json`.
 2. Add that version's section to `CHANGELOG.md`.
@@ -126,5 +136,5 @@ Then per release:
 The workflow re-runs every check, **refuses if the tag and `package.json` version
 disagree**, prints the tarball contents, then publishes.
 
-**Do not run `npm publish` from a laptop.** It skips the checks and needs a personal token
-that then has to live somewhere.
+**Do not run `npm publish` from a laptop.** It skips the checks, and it needs a credential
+sitting on disk.
