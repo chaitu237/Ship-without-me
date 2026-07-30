@@ -36,7 +36,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22          # npm 12+ requires >=22; OIDC needs npm 11.5.1+
           registry-url: https://registry.npmjs.org
 
       # Never publish something that does not pass its own checks.
@@ -62,8 +62,10 @@ jobs:
       - name: Confirm the tarball contents
         run: npm pack --dry-run
 
-      # OIDC trusted publishing needs npm 11.5.1 or newer
+      # Only the OIDC path needs a newer npm (11.5.1+). Skip it when publishing with a
+      # token: upgrading npm for no reason is a second thing that can break a release.
       - name: Use an npm that supports OIDC
+        if: env.HAS_NPM_TOKEN != 'true'
         run: npm install -g npm@latest
 
       - name: Say which credential path is in use
