@@ -12,7 +12,24 @@ All notable changes to this project are documented here. Format follows
   self-tested against fixtures; the `/ship-with-me` interview and the wave pipeline are not
   yet exercised. Treat `0.1.0` as pre-release until they are.
 
-## [0.1.0] — unreleased
+## [0.1.1]
+
+### Fixed
+
+- README contradicted `ship-without-me`: it named the build roles "spec reviewer" where the
+  skill says **scope review**. A README that disagrees with the skill it documents is worse
+  than one that says less.
+- "Verify it installed" told you to run the checker from a clone, which is not how most
+  people install it. It now exercises the published path.
+- The consumer CI snippet pinned Node 20; the package is tested on 22.
+- `package.json` normalized so npm stops silently rewriting `bin` paths and
+  `repository.url` at publish time — a published manifest should match the committed one.
+
+### Added
+
+- npm, CI and zero-dependency badges, now that the package is published.
+
+## [0.1.0]
 
 First packaged version.
 
@@ -45,7 +62,7 @@ First packaged version.
   - **Route comparison** — 3-5 routes differing in kind, weighted matrix, primary
     plus fallback plus a named switch condition
   - **Smallest complete vertical slice** — one journey end to end with a failure path
-  - **Three roles per build phase** — builder → spec reviewer → quality reviewer, in
+  - **Three roles per build phase** — builder → scope review → quality review, in
     that order, with four builder statuses and per-phase model tiering
   - **Red-team phase** on the result, ranked by likelihood × impact × detectability ×
     reversibility

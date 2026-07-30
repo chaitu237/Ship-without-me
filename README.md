@@ -3,17 +3,19 @@
 **Ship apps from limited context.** Skills that derive the right answer instead of listing
 options, and a checker that needs no model.
 
+[![npm](https://img.shields.io/npm/v/ship-without-me.svg)](https://www.npmjs.com/package/ship-without-me)
+[![CI](https://github.com/chaitu237/Ship-without-me/actions/workflows/ci.yml/badge.svg)](https://github.com/chaitu237/Ship-without-me/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-green.svg)](package.json)
-[![Skills](https://img.shields.io/badge/skills-27-orange.svg)](skills/)
+[![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
 
 Most AI-built apps work and still are not launchable. Blank link previews. Default page
 titles. No privacy page. A demo login that leaks. An "AI feature" that is a text box.
 A form that loses twenty minutes of typing on a validation error.
 
-ship closes that gap in two ways: **27 agent skills** that decide correctly instead of
-listing options, and **`ship detect`** — a launch-readiness checker with no model, no API
-key, and no dependencies.
+This closes that gap two ways: **27 agent skills** that decide correctly instead of listing
+options, and **`ship detect`** — a launch-readiness checker with no model, no API key, and
+no dependencies.
 
 ---
 
@@ -53,7 +55,7 @@ No account, no token, no install step. Add it to CI the same way:
 
 ```yaml
 - uses: actions/setup-node@v4
-  with: { node-version: 20 }
+  with: { node-version: 22 }
 - run: npx ship-without-me detect --strict
 ```
 
@@ -74,10 +76,11 @@ at the clone; both read `skills/` directly.
 ## Verify it installed
 
 ```bash
-node cli/detect.mjs --help     # from a clone: should print the rule groups
+npx ship-without-me detect --help
 ```
 
-In an agent, ask it to *"list the ship skills you can see"* — you should get 27.
+That should print the rule groups. In an agent, ask it to *"list the ship skills you can
+see"* — you should get 27.
 
 ## The two ways to build
 
@@ -104,9 +107,11 @@ condition** that would make the build technically complete and practically usele
 **leverage ladder** to find what already exists, and compares **routes that differ in kind**
 before committing to one with a named fallback and switch condition.
 
-Each build phase then runs three roles in fixed order: **builder → spec reviewer → quality
-reviewer**. Spec review asks "does this do what was asked, and nothing more"; quality review
-only starts once it passes.
+Each build phase then runs three roles in a fixed order: **builder → scope review → quality
+review**. Scope review asks "is this what was asked, and nothing else" — it fails on a
+missing requirement *and* on a feature nobody asked for. Quality review only starts once
+scope review passes, because judging how well something is built before knowing whether it
+is the right thing means polishing work you are about to throw away.
 
 ### `/ship-with-me`
 
