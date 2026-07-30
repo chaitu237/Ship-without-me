@@ -14,11 +14,21 @@ name: Publish
 #      Use an Automation token, never a token with more scope than publish.
 #
 # If the secret is absent, OIDC is used. A token in a local .env is read by nothing.
+#
+# A token must be able to publish without an interactive second factor: either an
+# Automation token, or a granular token with "bypass 2FA". A granular token without it
+# fails with E403 asking for 2FA, whatever the account's own 2FA setting is.
 
 on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      credential:
+        description: Which credential path to use
+        type: choice
+        default: auto
+        options: [auto, oidc, token]
 
 permissions:
   contents: read
@@ -29,8 +39,15 @@ jobs:
     runs-on: ubuntu-latest
     # The secrets context is not dependable inside a step-level `if:`, so resolve it once
     # here into a plain env value the steps can test.
+    #
+    # `auto` uses the token when the secret exists, OIDC otherwise — so deleting the secret
+    # is all it takes to move to trusted publishing. The explicit `oidc` and `token` choices
+    # exist to prove the other path works before committing to it, since a publish that
+    # fails authentication has published nothing and costs only the run.
     env:
-      HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
+      USE_TOKEN: >-
+        ${{ inputs.credential == 'token'
+            || (inputs.credential != 'oidc' && secrets.NPM_TOKEN != '') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -65,23 +82,23 @@ jobs:
       # Only the OIDC path needs a newer npm (11.5.1+). Skip it when publishing with a
       # token: upgrading npm for no reason is a second thing that can break a release.
       - name: Use an npm that supports OIDC
-        if: env.HAS_NPM_TOKEN != 'true'
+        if: env.USE_TOKEN != 'true'
         run: npm install -g npm@latest
 
       - name: Say which credential path is in use
         run: |
-          if [ "$HAS_NPM_TOKEN" = "true" ]; then
+          if [ "$USE_TOKEN" = "true" ]; then
             echo "publishing with the NPM_TOKEN secret"
           else
             echo "publishing by OIDC trusted publishing (no stored credential)"
           fi
 
       - name: Publish with the NPM_TOKEN secret
-        if: env.HAS_NPM_TOKEN == 'true'
+        if: env.USE_TOKEN == 'true'
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish by OIDC trusted publishing
-        if: env.HAS_NPM_TOKEN != 'true'
+        if: env.USE_TOKEN != 'true'
         run: npm publish --access public
