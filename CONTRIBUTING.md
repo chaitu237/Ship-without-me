@@ -130,11 +130,21 @@ Per release:
 1. Bump `version` in `package.json`.
 2. Add that version's section to `CHANGELOG.md`.
 3. `npm test` — must be green.
-4. `git tag v0.1.1 && git push --tags`
+4. `git tag vX.Y.Z && git push origin vX.Y.Z`
 5. Create the GitHub release for that tag.
 
 The workflow re-runs every check, **refuses if the tag and `package.json` version
 disagree**, prints the tarball contents, then publishes.
+
+To prove a credential path works before relying on it, dispatch the workflow with
+`credential: oidc` or `credential: token`. A publish that fails authentication has published
+nothing, so a test run costs only the run.
+
+| The publish step fails with | The cause is |
+|---|---|
+| `E403 … two-factor authentication or granular access token with bypass 2fa` | the **token**, not the account. A granular token needs *bypass 2FA*; an Automation token has it already. Changing the account's 2FA setting does not fix this. |
+| `ENEEDAUTH … requires you to be logged in` on the OIDC path | no trusted publisher is registered for the package, so npm has nothing to exchange its identity for. Register the repo and workflow filename at npmjs.com. |
+| `E404 Not Found - PUT` on the OIDC path | a credential *was* sent and rejected — usually `setup-node`'s `_authToken=${NODE_AUTH_TOKEN}` placeholder with no token in the environment. The OIDC step overrides `NPM_CONFIG_USERCONFIG` to avoid exactly this. |
 
 **Do not run `npm publish` from a laptop.** It skips the checks, and it needs a credential
 sitting on disk.
