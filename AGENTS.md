@@ -30,7 +30,7 @@ Dark: below 0.28. Never in between; mid-grey reads as an unstyled default.
 
 Derive hover/active/disabled by moving lightness. Never hand-pick a second hex.
 
-**Scope** — three modules for v1. Never six. Pick what the operator does daily; the rest
+**Scope** — three modules for v1. Never six. Pick what the primary user does daily; the rest
 is v2.
 
 **Stack** — match the repo. Greenfield: Vite + React + Tailwind + shadcn/ui + lucide.
@@ -129,7 +129,7 @@ If the user will only *read* the output, it is a demo — say so. If they will a
 
 ## Field users
 
-If the operator works away from a desk: camera-OCR and voice before typed forms. Local DB
+If the primary user works away from a desk: camera-OCR and voice before typed forms. Local DB
 as source of truth, idempotent queued writes with client-generated UUIDs, per-table
 conflict policy declared up front, visible sync state. Under 100 KB first paint. 48px
 touch targets. No hover states.

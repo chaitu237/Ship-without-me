@@ -227,7 +227,7 @@ rung that can carry the requirement.
 ```
  1. Capabilities the existing product already has
  2. Existing code, components, schemas, infrastructure in this repo
- 3. Existing human workflows — what the operator already does that works
+ 3. Existing human workflows — what the primary user already does that works
  4. Official APIs and supported integrations
  5. Data the user already owns (their spreadsheet, their exports, their forms)
  6. Public or open data with clear usage rights
@@ -404,7 +404,7 @@ modules against a schema that assumes six.
 objections, specifically:
 
 - Is the scope actually three modules, or six wearing a trenchcoat?
-- Does the operator described in `BRIEF.md` really do this daily, or did we infer a
+- Does the primary user described in `BRIEF.md` really do this daily, or did we infer a
   persona that doesn't exist?
 - Which decision would be most expensive to reverse after the build, and is it the one
   with the weakest evidence?
@@ -438,7 +438,7 @@ No gradient unless the brief asks for one.
 **Stack** — match the repo if one exists. Greenfield default: Vite + React + Tailwind +
 shadcn/ui + lucide icons. Do not negotiate frameworks with yourself.
 
-**Scope** — **three modules for v1. Never six.** Pick the three the operator does daily.
+**Scope** — **three modules for v1. Never six.** Pick the three the primary user does daily.
 Everything else goes in `.ship/ROADMAP.md` as v2.
 
 **Auth** — email + password for global/B2B. Phone + OTP for emerging markets. Always
@@ -559,7 +559,7 @@ Include the scene: where this phase sits, what came before, what depends on it. 
 that does not know why it is doing something builds the letter and misses the point.
 
 Activate `regional-commerce-stack` when the brief names a specific country or market.
-Activate `field-ops-mobile` when the operator works away from a desk.
+Activate `field-ops-mobile` when the primary user works away from a desk.
 
 **Commit after each.**
 

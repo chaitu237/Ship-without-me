@@ -19,6 +19,7 @@ behaviour; everything host-specific is a thin adapter pointing back at them.
 | Claude Code | Plugin | `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `commands/*.md`, `skills/` |
 | Codex | Plugin | `.codex-plugin/plugin.json`, `skills/` |
 | Gemini CLI | Plugin | `gemini-extension.json` (points `contextFileName` at `AGENTS.md`), `commands/*.toml`, `skills/` |
+| Grok CLI | Plugin | `AGENTS.md` read automatically; symlink `skills/*` into `.grok/skills/` for project scope |
 | GitHub Copilot | Instruction | `.github/copilot-instructions.md` |
 | Cursor | Instruction | `.cursor/rules/ship.mdc` |
 | Windsurf | Instruction | `.windsurf/rules/ship.md` |
@@ -26,6 +27,27 @@ behaviour; everything host-specific is a thin adapter pointing back at them.
 | Kiro | Instruction | `.kiro/steering/ship.md` |
 | Zed · Amp · Jules · Junie · Antigravity | Instruction | `AGENTS.md` from the repo root |
 | Any CI, any repo | CLI | `npx ship-without-me detect` |
+
+## Installing into a host that reads `.grok/skills/`
+
+Grok CLI loads `AGENTS.md` from the working directory with no configuration, and discovers
+skills from `~/.grok/skills/` (user scope) or `.grok/skills/` (project scope). Project scope
+is the better target: it keeps one checkout's skills out of every other project.
+
+```bash
+npm i ship-without-me
+mkdir -p .grok/skills
+for s in node_modules/ship-without-me/skills/*/; do
+  ln -s "$PWD/$s" ".grok/skills/$(basename "$s")"
+done
+```
+
+Symlinks rather than copies, so `npm update` moves the skills with the package. Confirm with
+`grok inspect` — it lists every skill it found and the scope it came from.
+
+Headless runs need `--always-approve`. Grok's `--permission-mode acceptEdits` does not
+approve tool execution in a non-interactive run, so the agent announces its plan and exits
+without writing anything, exit code 0. A green exit is not evidence a headless run did work.
 
 ## `AGENTS.md` is the highest-leverage file here
 

@@ -79,12 +79,28 @@ const BANNED = [
   [/\bimplementer\b/i, 'implementer', 'builder'],
   [/\bmeta-skill\b|\bmaster skill\b/i, 'meta/master skill', 'orchestrator'],
 ]
-for (const slug of dirs) {
-  const f = new URL(`${slug}/SKILL.md`, root)
+
+// `operator` is legitimate in a skill scoped to work tools and wrong anywhere that speaks
+// about products in general — a consumer app has no operator. So it is checked only outside
+// the skills whose whole subject is somebody doing a job.
+const OPERATOR_SCOPED = new Set([
+  'vertical-business-os', 'field-ops-mobile', 'regional-commerce-stack', 'payments-billing',
+])
+
+// AGENTS.md is checked alongside the skills, and it matters more than any single one of
+// them: it is what a one-file install gets, and hosts that read it load it on every
+// request. Vocabulary enforced only on the files nobody reads first is not enforced.
+const CORE = [['AGENTS.md', new URL('../AGENTS.md', import.meta.url)]]
+
+for (const [label, f] of [...dirs.map(s => [s, new URL(`${s}/SKILL.md`, root)]), ...CORE]) {
   if (!existsSync(f)) continue
   const t = readFileSync(f, 'utf8')
   for (const [re, bad, good] of BANNED)
-    if (re.test(t)) warn(slug, `uses "${bad}" — CONTEXT.md resolves this to "${good}"`)
+    if (re.test(t)) warn(label, `uses "${bad}" — CONTEXT.md resolves this to "${good}"`)
+  // A quoted mention is the term being ruled on, not used — that is what CONTEXT.md asks
+  // for, so strip quoted occurrences before deciding whether the word is in play.
+  if (!OPERATOR_SCOPED.has(label) && /\boperators?\b/i.test(t.replace(/["`]operators?["`]/gi, '')))
+    warn(label, 'uses "operator" outside a work-tool scope — CONTEXT.md resolves this to "primary user"')
 }
 
 // ── descriptions must discriminate from each other ──

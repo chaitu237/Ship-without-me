@@ -59,10 +59,10 @@ How many top-level destinations?
 
 Role-gate it: a viewer should not see admin entries greyed out, they should not see them.
 
-## 4. Derive the dashboard tiles from what the operator checks first
+## 4. Derive the dashboard tiles from what the primary user checks first
 
 ```
-What does the operator look at before doing anything else?
+What does the primary user look at before doing anything else?
 └─ THAT is your tile row. Three or four. Never eight —
    eight tiles means nothing is important.
 ```
@@ -75,7 +75,7 @@ its own table, the data model is wrong.
 
 ## 5. Derive the greeting from whether the app is used daily
 
-An operator opening this every morning benefits from "Good morning, Priya · Tuesday
+Someone opening this every morning benefits from "Good morning, Priya · Tuesday
 14 March". It costs nothing and it makes the app feel addressed to a person rather than
 to a seat.
 
