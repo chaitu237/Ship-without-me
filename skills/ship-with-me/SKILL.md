@@ -68,21 +68,35 @@ tell you what to do.**
 Walk the decision tree **top-down**. Resolve parents before children — a child question
 is often moot once the parent lands.
 
-**Resolve the product shape first.** It decides what the later questions even mean — a
-game has no "modules", an analytical product has no "operator", a developer tool's user is
-the builder. Get this wrong and every question below is subtly the wrong question.
+**Resolve the profile first, with `product-profile`.** It decides what the later questions
+even mean — a game has no "modules", an analytical product has no "operator", a developer
+tool's user is the builder. Get this wrong and every question below is subtly the wrong
+question, asked confidently.
+
+Most of the profile comes from the references without asking. Ask only where a property is
+genuinely undetermined *and* changes the build.
 
 ```
-primary user & the job ──► PRODUCT SHAPE ──► what a complete first slice is
-       │                   (work tool · personal · two-sided · analytical ·
-       │                    developer tool · internal · automation · content)
+references ──► PRODUCT PROFILE ──► the conditional skill graph
+       │       (value location · state owner · time model · content source
+       │        · identity boundary · the observable loop)
        │
        ├─► theme & accent ──► layout archetype
-       ├─► auth model     ──► demo access? ──► seeded roles
+       ├─► identity boundary ──► (only if != none) auth ──► demo access ──► roles
        ├─► where content comes from on day one
        ├─► market/region  ──► compliance surface
        └─► connectivity   ──► offline policy ──► conflict rules
 ```
+
+**Never ask "should this have login?" as a preference.** Identity follows from a reason —
+privacy, sharing, sync, ownership, payment, permissions. Ask about the *reason* if it is
+unclear ("will more than one person use this, on more than one device?") and derive the
+boundary yourself. A user asked to choose an auth model will pick one whether or not the
+product needs any.
+
+Then confirm the five things a reference cannot settle: the first-value event, the rights
+to the content, the identity boundary, whether anything must be shared or synced, and any
+capability nothing here covers. Everything else, extract.
 
 ### Question format
 
@@ -174,33 +188,29 @@ Do not re-argue it later. Do not quietly revert to your preference during the bu
 
 ## Phase 3 — Confirm, then build
 
-Write `.ship/BRIEF.md` and `.ship/DECISIONS.md` from the interview. Show the user a
-short summary. Get an explicit go.
+Write `.ship/PROFILE.json`, `.ship/FIRST_VALUE.md`, `.ship/BRIEF.md` and
+`.ship/DECISIONS.md` from the references and the interview. Show the user a short summary —
+including **which capability packs you selected and which you skipped**, because a skipped
+pack is a decision they may want to overturn. Get an explicit go.
 
-Then run the build in dependency order, each in a fresh context:
+Then run the graph the profile resolved, each phase in a fresh context:
 
 ```
-FOUNDATION   design-system-commit → layout-patterns
-                  │
-DATA         database-schema → backend-api-design → tenant-auth-demo
-                  │                                       │
-                  │                                 account-lifecycle
-CLIENT       frontend-architecture ─┬─► app-shell-composition
-                  │                 ├─► list-and-table
-                  │                 ├─► forms-and-validation
-                  │                 ├─► states-and-feedback
-                  │                 └─► landing-composition
-                  │
-DOMAIN       vertical-business-os · grounded-ai-feature
-                  │
-LAUNCH       legal-and-consent → ship-ready-audit
-                  → deployment-hardening → deploy-durability
-
-   conditional: regional-commerce-stack · field-ops-mobile
+CORE — always
+  design-system-commit → layout-patterns → frontend-architecture
+        → states-and-feedback → [the branches] → verify the loop
 ```
 
-Order matters. Tokens and layout before components. Schema before API before auth. Never
-build a screen against an API that does not exist yet.
+The branches are the same conditional set `ship-without-me` resolves, gated on the same
+properties — server persistence earns a schema and an API, an identity boundary above
+`none` earns auth, a device-owned runtime earns runtime and media skills, public
+distribution earns a landing page and a launch audit. **A property the profile says is
+absent earns nothing**, and a capability nothing covers becomes a gap under `.ship/gaps/`
+rather than being routed to the closest skill that happens to exist.
+
+Order matters inside a branch. Tokens and layout before components. Where there is a
+server: schema before API before auth — never build a screen against an API that does not
+exist yet. Where there is no server, none of that is built at all.
 
 Commit after each phase. Report progress as you go; the user is here and wants to see it.
 
