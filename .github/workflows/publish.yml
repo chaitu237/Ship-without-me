@@ -99,6 +99,12 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # setup-node writes an .npmrc containing `_authToken=${NODE_AUTH_TOKEN}`. With no token
+      # in the environment, npm sends that placeholder verbatim as a bearer token and the
+      # registry rejects it before OIDC is ever attempted. Point npm at an empty user config
+      # so it has no credential to send and falls through to exchanging its OIDC identity.
       - name: Publish by OIDC trusted publishing
         if: env.USE_TOKEN != 'true'
         run: npm publish --access public
+        env:
+          NPM_CONFIG_USERCONFIG: ${{ runner.temp }}/.npmrc-oidc
