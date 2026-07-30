@@ -108,8 +108,8 @@ npx ship-without-me detect --help
 
 ## Releasing
 
-Publishing runs in CI on a GitHub release. Two credential paths; the workflow uses whichever
-is configured, and prints which one it took.
+Publishing runs in CI on a GitHub release, by OIDC trusted publishing. The workflow prints
+which credential path it took.
 
 **Preferred — OIDC trusted publishing.** No credential exists to leak or rotate. One-time
 setup at npmjs.com → the package → Settings → Trusted publishing → add this repository and

@@ -2,22 +2,20 @@ name: Publish
 
 # Publishes to npm when a release is created.
 #
-# Two ways to authenticate. The workflow picks whichever is configured.
+# Authentication is OIDC trusted publishing. A token path exists but must be asked for
+# explicitly, by dispatching with `credential: token`.
 #
-#   1. OIDC trusted publishing (preferred). npm verifies this workflow's identity directly
-#      from GitHub, so there is no credential to create, store, or rotate and nothing
-#      long-lived that can leak. Enable once: npmjs.com → package → Settings →
-#      Trusted publishing → add this repo and this workflow file.
+# OIDC means npm verifies this workflow's identity directly from GitHub: there is no
+# credential to create, store, or rotate, and the published package carries a provenance
+# attestation pointing back at the run that built it. Set up once at npmjs.com → the
+# package → Settings → Trusted publishing → this repo and this workflow filename.
 #
-#   2. An NPM_TOKEN repository secret. Simpler to start, but it is a long-lived credential
-#      that has to be rotated and can be exfiltrated by anything that runs in CI.
-#      Use an Automation token, never a token with more scope than publish.
-#
-# If the secret is absent, OIDC is used. A token in a local .env is read by nothing.
-#
-# A token must be able to publish without an interactive second factor: either an
-# Automation token, or a granular token with "bypass 2FA". A granular token without it
-# fails with E403 asking for 2FA, whatever the account's own 2FA setting is.
+# The token path is a fallback for a fork or a registry without trusted publishing, and it
+# needs an NPM_TOKEN secret. Two things about that token, because its failure mode is
+# misleading: it must be able to publish without an interactive second factor — an
+# Automation token, or a granular token with "bypass 2FA" — and a granular token lacking
+# that fails with E403 asking for 2FA no matter what the account's own 2FA setting is.
+# A token sitting in a local .env is read by nothing here.
 
 on:
   release:
@@ -27,8 +25,8 @@ on:
       credential:
         description: Which credential path to use
         type: choice
-        default: auto
-        options: [auto, oidc, token]
+        default: oidc
+        options: [oidc, token]
 
 permissions:
   contents: read
@@ -37,17 +35,14 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # The secrets context is not dependable inside a step-level `if:`, so resolve it once
-    # here into a plain env value the steps can test.
+    # Resolved once here rather than in a step-level `if:`, where the secrets and inputs
+    # contexts are not dependable.
     #
-    # `auto` uses the token when the secret exists, OIDC otherwise — so deleting the secret
-    # is all it takes to move to trusted publishing. The explicit `oidc` and `token` choices
-    # exist to prove the other path works before committing to it, since a publish that
-    # fails authentication has published nothing and costs only the run.
+    # OIDC is the default and a token is opt-in, rather than "token if the secret happens to
+    # exist". A leftover secret should not silently become the credential a release uses —
+    # that is how you get a release taking an untested path months after someone added it.
     env:
-      USE_TOKEN: >-
-        ${{ inputs.credential == 'token'
-            || (inputs.credential != 'oidc' && secrets.NPM_TOKEN != '') }}
+      USE_TOKEN: ${{ inputs.credential == 'token' }}
     steps:
       - uses: actions/checkout@v4
 

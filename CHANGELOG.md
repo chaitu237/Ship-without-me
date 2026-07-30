@@ -12,6 +12,28 @@ All notable changes to this project are documented here. Format follows
   self-tested against fixtures; the `/ship-with-me` interview and the wave pipeline are not
   yet exercised. Treat `0.1.0` as pre-release until they are.
 
+## [0.1.3]
+
+### Fixed
+
+- Releases are published by OIDC trusted publishing, so no credential is stored, and the
+  published package carries a provenance attestation linking it to the workflow run that
+  built it.
+- The OIDC path could never have worked: `setup-node` writes an `.npmrc` containing
+  `_authToken=${NODE_AUTH_TOKEN}`, and with no token in the environment npm sent that
+  placeholder verbatim as a bearer token, so the registry rejected it before OIDC was
+  attempted. That step now runs with an empty npm user config.
+- The credential path was chosen by whether an `NPM_TOKEN` secret happened to exist, which
+  meant a leftover secret silently became the credential a release used. OIDC is now the
+  default and a token is opt-in.
+
+### Added
+
+- `workflow_dispatch` takes a `credential` input (`auto` | `oidc` | `token`), so a
+  credential path can be proven before a release depends on it.
+- `CONTRIBUTING.md` maps the three npm publish auth failures to their causes. Each one
+  points somewhere other than where the problem is.
+
 ## [0.1.2]
 
 ### Fixed
