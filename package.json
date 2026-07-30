@@ -32,7 +32,8 @@
     "sync": "node scripts/sync-adapters.mjs && node scripts/gen-rules-doc.mjs && node scripts/gen-registry.mjs",
     "check:registry": "node scripts/gen-registry.mjs --check",
     "test:routing": "node scripts/plan.mjs --test",
-    "plan": "node scripts/plan.mjs"
+    "plan": "node scripts/plan.mjs",
+    "evals:release": "node scripts/run-evals.mjs validate --release"
   },
   "keywords": [
     "agent-skills",

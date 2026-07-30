@@ -84,7 +84,20 @@ function validate () {
     console.log(`\nno cases yet (${missing.length}):`)
     for (const m of missing) console.log(`  · ${m}`)
   }
-  console.log(errors ? `\n${errors} error(s)` : '\nall cases valid')
+
+  // "all cases valid" while most skills ship none is the exact false green this repo warns
+  // about elsewhere: a check that reports success for work it never looked at. Say what was
+  // actually checked, and let --release make the omission fail rather than merely print.
+  const release = process.argv.includes('--release')
+  if (release && missing.length) {
+    console.error(`\n✗ ${missing.length} skill(s) ship no eval cases — a skill claims something`)
+    console.error('  testable, so an untested claim blocks release. Add cases, or drop the skill.')
+    errors += missing.length
+  }
+  if (errors) console.log(`\n${errors} error(s)`)
+  else console.log(missing.length
+    ? `\nthe ${totalCases} cases present are valid — ${missing.length} skill(s) still untested`
+    : '\nall cases valid')
   return errors
 }
 

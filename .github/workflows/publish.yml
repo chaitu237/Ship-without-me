@@ -59,6 +59,8 @@ jobs:
           node scripts/test-detector.mjs
           node scripts/sync-adapters.mjs --check
           node scripts/run-evals.mjs validate
+          node scripts/gen-registry.mjs --check
+          node scripts/plan.mjs --test
 
       - name: Refuse if the release tag and package version disagree
         if: github.event_name == 'release'

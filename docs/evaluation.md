@@ -142,6 +142,14 @@ second bar. Everything else gets the first.
 
 ## The release gate
 
+`node scripts/run-evals.mjs validate --release` fails when any skill ships no cases. Plain
+`validate` does not — it reports how many are still untested and passes, so the gate is a
+deliberate act rather than a permanent red.
+
+The reason for the split: a check that prints "all cases valid" while most skills ship none
+is the same false green this document warns about everywhere else. It reports success for
+work it never looked at.
+
 A skill may be published when:
 
 - [ ] Every case validates, and every `expect` carries a `because`
