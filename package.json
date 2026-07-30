@@ -1,5 +1,5 @@
 {
-  "name": "@chaitu237/ship-without-me",
+  "name": "ship-without-me",
   "version": "0.1.0",
   "description": "Derivation-first agent skills for shipping launchable apps, plus a zero-dependency launch-readiness checker.",
   "type": "module",
@@ -54,8 +54,5 @@
   "engines": {
     "node": ">=18"
   },
-  "dependencies": {},
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  }
+  "dependencies": {}
 }

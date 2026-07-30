@@ -55,7 +55,7 @@ symptom→cause table · don't.
 
 Rules live in `cli/detect.mjs`. Constraints, in order of importance:
 
-1. **Zero dependencies.** Node 18+ built-ins only. This is what lets `npx @chaitu237/ship-without-me detect`
+1. **Zero dependencies.** Node 18+ built-ins only. This is what lets `npx ship-without-me detect`
    run anywhere with no install step.
 2. **No false positives.** A noisy rule gets the whole tool disabled. If you cannot
    express it without flagging correct code, it belongs in a skill's judgement checklist
@@ -103,23 +103,28 @@ and why.
 ```bash
 npm test                      # syntax + CLI smoke
 node scripts/gen-rules-doc.mjs
-npx @chaitu237/ship-without-me detect --help
+npx ship-without-me detect --help
 ```
 
 ## Releasing
 
-Publishing runs in CI on a GitHub release, authenticated with `GITHUB_TOKEN` — a token
-minted for that one run, scoped to this repository, expiring when the job ends. Nobody
-creates, stores, or rotates a publishing credential.
+Publishing runs in CI on a GitHub release and authenticates by **OIDC trusted publishing** —
+npm verifies the workflow's identity directly from GitHub, so there is no `NPM_TOKEN` to
+create, store, or rotate, and no long-lived credential that can leak.
+
+One-time setup: npmjs.com → the package → Settings → Trusted publishing → add this
+repository and `.github/workflows/publish.yml`.
+
+Then per release:
 
 1. Bump `version` in `package.json`.
 2. Add that version's section to `CHANGELOG.md`.
 3. `npm test` — must be green.
-4. Commit, tag, push: `git tag v0.1.1 && git push --tags`
+4. `git tag v0.1.1 && git push --tags`
 5. Create the GitHub release for that tag.
 
-`.github/workflows/publish.yml` then re-runs every check, refuses if the tag and
-`package.json` version disagree, prints the tarball contents, and publishes.
+The workflow re-runs every check, **refuses if the tag and `package.json` version
+disagree**, prints the tarball contents, then publishes.
 
 **Do not run `npm publish` from a laptop.** It skips the checks and needs a personal token
 that then has to live somewhere.

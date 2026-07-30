@@ -1,10 +1,11 @@
 name: Publish
 
-# Publishes to GitHub Packages when a release is created.
+# Publishes to npm when a release is created.
 #
-# Uses GITHUB_TOKEN, not a personal access token. The token is minted for this run,
-# scoped to this repository, and expires when the job ends — so nobody has to create,
-# store, or rotate a publishing credential.
+# Authenticates by OIDC trusted publishing: npm verifies this workflow's identity directly
+# from GitHub's token service, so there is no NPM_TOKEN to create, store, or rotate, and no
+# long-lived credential that can leak. Enable it once at
+# npmjs.com → the package → Settings → Trusted publishing.
 
 on:
   release:
@@ -13,7 +14,7 @@ on:
 
 permissions:
   contents: read
-  packages: write
+  id-token: write   # required for OIDC trusted publishing
 
 jobs:
   publish:
@@ -24,8 +25,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: https://npm.pkg.github.com
-          scope: '@chaitu237'
+          registry-url: https://registry.npmjs.org
 
       # Never publish something that does not pass its own checks.
       - name: Verify before publishing
@@ -50,7 +50,9 @@ jobs:
       - name: Confirm the tarball contents
         run: npm pack --dry-run
 
+      # OIDC trusted publishing needs npm 11.5.1 or newer
+      - name: Use an npm that supports OIDC
+        run: npm install -g npm@latest
+
       - name: Publish
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish --access public

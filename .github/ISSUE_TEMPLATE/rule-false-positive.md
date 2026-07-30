@@ -13,7 +13,7 @@ Smallest example that triggers it.
 
 **Command you ran**
 ```
-npx @chaitu237/ship-without-me detect ...
+npx ship-without-me detect ...
 ```
 
 A noisy rule gets the whole tool switched off, so these are treated as high priority.
