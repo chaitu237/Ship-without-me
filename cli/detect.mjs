@@ -70,11 +70,40 @@ const SECRET_PATTERNS = [
 ]
 const PLACEHOLDER = /^(changeme|xxx+|your[-_]?\w+[-_]?here|todo|replace[-_]?me|<.*>)$/i
 
+// Which surfaces this repo actually has. Drives the coverage report, so a group with no
+// surface is reported as unexamined rather than counted as a pass.
+const SURFACES = new Set()
+
+function detectSurfaces(files, rel) {
+  const has = re => files.some(f => re.test(rel(f)))
+  const bodyHas = (exts, re) => files.some(f =>
+    exts.includes(extname(f)) && re.test(read(f) || ''))
+
+  if (has(/\.html$/)) SURFACES.add('served-html')
+  // "It is JavaScript" is not a UI. A library's .js has no components, so component rules
+  // firing on it are noise that teaches the reader to ignore the tool. Require a real
+  // component signal — JSX/SFC extensions, or a UI framework import.
+  if (has(/\.(jsx|tsx|vue|svelte)$/) ||
+      bodyHas(['.js', '.ts', '.mjs'], /from\s+['"](react|preact|vue|svelte|solid-js|lit)['"]/))
+    SURFACES.add('client-code')
+  if (has(/\.(css|scss|sass|less)$/) || bodyHas(['.js', '.jsx', '.ts', '.tsx'], /className=|styled\.|tailwind/))
+    SURFACES.add('stylesheet')
+  if (has(/migrations?\//i) || has(/\.(sql|prisma)$/) || bodyHas(['.js', '.ts', '.mjs'], /CREATE TABLE|defineTable|new Schema\(/i))
+    SURFACES.add('persistence')
+  if (bodyHas(['.jsx', '.tsx', '.vue', '.svelte', '.html'], /<form|<input|<textarea|<select/i))
+    SURFACES.add('form-markup')
+  if (bodyHas(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.py', '.go', '.rb'], /\b(login|signup|sign-in|signIn|authenticate)\b/i))
+    SURFACES.add('auth-surface')
+  if (bodyHas(['.js', '.ts', '.mjs', '.py', '.go', '.rb'], /\b(app|router)\.(get|post|put|patch|delete)\s*\(|@(app|router)\.(route|get|post)|http\.HandleFunc/))
+    SURFACES.add('http-handlers')
+}
+
 function repoRules() {
   if (!existsSync(ROOT)) return
   const files = walk(ROOT)
   if (!files.length) return
   const rel = p => relative(ROOT, p)
+  detectSurfaces(files, rel)
 
   for (const f of files) {
     const ext = extname(f)
@@ -405,6 +434,53 @@ const RULE_GROUPS = {
 }
 RULE_GROUPS.all = [...new Set(Object.values(RULE_GROUPS).flat())]
 
+// Every group above needs a surface to inspect. Without that surface the group is not
+// passing — it is unexamined, and those are different things. Reporting "all checks passed"
+// for a project with no rendered surface tells a library author their library is fine when
+// nothing about a library was looked at. That is a check that fails open, dressed as a
+// clean run, which is the most expensive kind of wrong this tool can be.
+//
+// So: name what each group needs, detect which surfaces are actually present, and report
+// coverage alongside the result. Never claim a pass over territory never entered.
+// Keyed by RULE, not by group. Groups are a filtering convenience for `--rules launch` and
+// they deliberately overlap, so they mix rules with different needs: `deploy` holds both
+// response-header rules that require a live URL and `.env.example` rules that apply to any
+// repo at all. Gating by group therefore silenced correct findings on a CLI — the tests
+// caught it.
+//
+// A rule absent from this map is inspectable anywhere. Defaulting to "inspectable" keeps
+// the safe direction: an over-eager rule is visible and arguable, whereas a wrongly
+// suppressed one is silence that reads as a pass.
+const RULE_NEEDS = {}
+const needs = (surface, rules) => rules.forEach(r => { RULE_NEEDS[r] = surface })
+
+needs('served-html', ['default-title', 'long-title', 'no-description', 'description-length',
+  'no-canonical', 'no-favicon', 'no-lang', 'no-og-image', 'og-image-relative', 'no-og-title',
+  'no-twitter-card', 'no-h1', 'shell-html', 'no-robots', 'robots-blocks-all', 'soft-404',
+  'bad-status', 'unreachable', 'hsts', 'no-nosniff', 'no-csp', 'no-referrer-policy',
+  'no-frame-protection', 'no-compression', 'hashed-asset-not-cached', 'js-oversize',
+  'css-bloat', 'missing-legal', 'missing-legal-terms'])
+needs('persistence',   ['float-money', 'no-tenant-id'])
+needs('client-code',   ['fetch-outside-client', 'no-error-boundary', 'fetch-no-timeout', 'no-empty-state'])
+needs('stylesheet',    ['raw-hex-sprawl', 'spacing-off-scale'])
+needs('form-markup',   ['inputs-without-labels', 'password-no-autocomplete', 'wrong-input-type',
+  'validate-on-keystroke', 'no-validation-schema', 'submit-not-disabled', 'unconstrained-form',
+  'demo-creds-prefilled', 'consent-prechecked'])
+needs('auth-surface',  ['no-password-reset', 'no-change-password', 'no-email-verification',
+  'no-account-deletion', 'no-data-export'])
+needs('http-handlers', ['unversioned-api', 'tenant-from-request', 'token-in-query',
+  'cors-wildcard-credentials', 'unpaginated-list'])
+
+const SURFACE_LABEL = {
+  'served-html':   'no served HTML (pass --url, or this has no web surface)',
+  'persistence':   'no schema or migrations found',
+  'client-code':   'no client component code found',
+  'stylesheet':    'no stylesheet found',
+  'form-markup':   'no form markup found',
+  'auth-surface':  'no login or account surface found',
+  'http-handlers': 'no HTTP route handlers found',
+}
+
 function autoUrl() {
   const explicit = flag('url')
   if (typeof explicit === 'string') return explicit
@@ -451,19 +527,43 @@ const run = async () => {
   const waived = new Map([...waivedRaw].filter(([r]) => real.has(r)))
   const bogus = [...waivedRaw.keys()].filter(r => !real.has(r))
 
+  if (url) SURFACES.add('served-html')
+
+  // A rule whose every group lacks its surface must not report. Most such rules detect an
+  // ABSENCE — no error boundary, no empty state — and absence is trivially true where the
+  // surface does not exist. Firing there is a false positive that teaches the reader the
+  // tool is noise, which costs more than the rule ever earns.
+  const inspectable = rule => !RULE_NEEDS[rule] || SURFACES.has(RULE_NEEDS[rule])
+
   const kept = findings.filter(f => {
     if (allow && !allow.has(f.rule)) return false
     if (waived.has(f.rule)) return false
+    if (!inspectable(f.rule)) return false
     return true
   })
 
   const fails = kept.filter(f => f.level === 'fail')
   const warns = kept.filter(f => f.level === 'warn')
 
+  // Coverage: which groups had a surface to inspect, and which had none. A group with no
+  // surface did not pass — it was never examined, and saying so is the difference between
+  // a useful report and a green light over unlooked-at ground.
+  const groupNames = Object.keys(RULE_GROUPS).filter(g =>
+    g !== 'all' && (!allow || RULE_GROUPS[g]?.some(r => allow.has(r))))
+  const groupOk = g => RULE_GROUPS[g].some(r => !RULE_NEEDS[r] || SURFACES.has(RULE_NEEDS[r]))
+  const checked = groupNames.filter(groupOk)
+  const skipped = groupNames.filter(g => !groupOk(g))
+  const whySkipped = g => SURFACE_LABEL[RULE_NEEDS[RULE_GROUPS[g][0]]] || 'no matching surface'
+
   if (JSON_OUT) {
     console.log(JSON.stringify({
       scanned, pass: fails.length === 0,
       failed: fails.length, warnings: warns.length,
+      coverage: {
+        checked,
+        not_applicable: skipped.map(g => ({ group: g, reason: whySkipped(g) })),
+        note: 'not_applicable groups were never examined. They are not passes.',
+      },
       waived: [...waived.entries()].map(([rule, w]) => ({ rule, ...w })),
       findings: kept,
     }, null, 2))
@@ -483,8 +583,26 @@ const run = async () => {
     const parts = []
     if (fails.length) parts.push(`${C.r}${fails.length} failed${C.x}`)
     if (warns.length) parts.push(`${C.y}${warns.length} warning${warns.length > 1 ? 's' : ''}${C.x}`)
-    if (!parts.length) parts.push(`${C.g}all checks passed${C.x}`)
+    if (!parts.length) {
+      // Never "all checks passed" when whole groups were never examined. A library author
+      // reading that would conclude their library is fine, having had nothing about a
+      // library looked at.
+      parts.push(skipped.length
+        ? `${C.g}${checked.length}/${groupNames.length} groups clean${C.x}`
+        : `${C.g}all checks passed${C.x}`)
+    }
     console.log(`\n  ${parts.join(' · ')}\n`)
+
+    if (skipped.length) {
+      console.log(`  ${C.d}not checked — no surface for these, so they are unexamined, not passing:${C.x}`)
+      for (const g of skipped) console.log(`    ${C.d}${g.padEnd(10)} ${whySkipped(g)}${C.x}`)
+      if (checked.length === 0) {
+        console.log(`\n  ${C.y}Nothing here matches what this tool inspects.${C.x} It checks web`)
+        console.log(`  ${C.d}surfaces. For a library, CLI, pipeline, or model, its silence is not${C.x}`)
+        console.log(`  ${C.d}evidence — verify against that deliverable's own first-value contract.${C.x}`)
+      }
+      console.log('')
+    }
   }
 
   process.exit(fails.length || (STRICT && warns.length) ? 1 : 0)
