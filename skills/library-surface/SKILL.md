@@ -4,6 +4,10 @@ description: >
   Use when building a library, SDK, or package published for other code to import — no
   application, no UI, no deployment. Use when a build with no `bin` field and no server is
   about to get a theme, a landing page, or a database.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "consumed_via=an import"
 ---
 
 # Library surface

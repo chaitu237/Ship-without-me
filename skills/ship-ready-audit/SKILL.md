@@ -3,6 +3,10 @@ name: ship-ready-audit
 description: >
   Use before sharing or launching anything publicly, when a shared link renders as a blank card,
   or when a site is invisible to search engines.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "distribution=public&&consumed_via=pixels"
 ---
 
 # Ship-ready audit

@@ -3,6 +3,10 @@ name: frontend-architecture
 description: >
   Use when starting a frontend, when state has become tangled or duplicated, when the app
   refetches on every navigation, or when one change re-renders everything.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "consumed_via=pixels"
 ---
 
 # Frontend architecture

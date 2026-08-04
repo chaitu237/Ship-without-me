@@ -4,6 +4,10 @@ description: >
   Use when building a command-line tool, or any deliverable reached through argv/stdin/
   stdout/exit code rather than a browser. Use when a build with a `bin` field is about to
   get a theme, a viewport, or a login screen.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "consumed_via=a terminal"
 ---
 
 # CLI surface

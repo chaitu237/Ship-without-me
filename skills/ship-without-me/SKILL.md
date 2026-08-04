@@ -3,6 +3,9 @@ name: ship-without-me
 description: >
   Use when the user wants a complete app built and deployed from a single prompt with no further
   input from them, or says to just build it and not ask questions.
+license: MIT
+metadata:
+  routing: orchestrator
 ---
 
 # Ship without me
@@ -175,50 +178,14 @@ Is there a repo, a directory, any files?
            every leverage decision downstream.
 ```
 
-### 0b. Derive the product shape — this reframes everything downstream
+### 0b. Frame the product shape
 
-Do not assume the thing being built is a business tool. The shape determines what "value",
-"first use", and "a complete slice" even mean, and getting it wrong makes every later
-decision subtly wrong.
+Read `references/product-shapes.md` and pick the shape. It sets what *value*, *first use*
+and *a complete slice* mean for this product.
 
-```
-Who benefits, and from what?
-├─ Someone doing paid work, repeatedly ──────► WORK TOOL
-│    value = time or error saved · first use = one real task completed
-│    competitor = their spreadsheet, notebook, or group chat
-├─ Someone acting for themselves ────────────► PERSONAL PRODUCT
-│    value = a habit formed or a moment served · first use = one satisfying loop
-│    competitor = doing nothing, or an app they already have
-├─ Two sides who need each other ────────────► TWO-SIDED
-│    value = a successful match · first use = one side finds the other
-│    competitor = however they find each other today, usually informally
-├─ Someone with a question and data ─────────► ANALYTICAL PRODUCT
-│    value = a decision made with confidence · first use = one answered question
-│    competitor = a spreadsheet and an opinion
-├─ Someone building something ────────────────► DEVELOPER TOOL
-│    value = friction removed from a workflow · first use = one task done faster
-│    competitor = a shell script they already wrote
-├─ A process crossing several roles ─────────► INTERNAL SYSTEM
-│    value = a handoff that stops failing · first use = one case end to end
-│    competitor = email, and someone remembering
-├─ Something that should run unattended ─────► AUTOMATION / AGENT
-│    value = attention returned · first use = one correct run, observed
-│    competitor = a person doing it manually, reliably
-└─ Someone seeking to feel or learn something ► CONTENT / EXPERIENCE
-     value = attention willingly given · first use = one session that lands
-     competitor = everything else competing for that attention
-```
-
-If two shapes apply **and only one is being built right now**, the product is two products
-— pick the one that carries the first value event and log the other as Not now. That is a
-phasing call. It is the wrong call if both are being built *in this run*: a library shipped
-with its own CLI and docs site is not phased, it is composed, and flattening it to one shape
-is how the CLI silently inherits a database schema meant for the docs site. See 0b-ii.
-
-**The shape frames the product. It does not choose the architecture.** A music player and
-a habit tracker are both PERSONAL PRODUCT and share almost no technical requirement. Eight
-labels cannot carry that, and a label is exactly the kind of category this skill is not
-allowed to branch on. Derive the properties.
+**The shape frames. It does not choose the architecture** — 0b-ii does, from properties.
+A label cannot carry an architecture, and treating it as one is the categorical branching
+this skill is not allowed to do.
 
 ### 0b-ii. Derive the product profile — this is what selects the build
 
@@ -612,45 +579,10 @@ Then write `.ship/ROADMAP.md` with a phase per subskill and an exit criterion ea
 
 ### The defaults you resolve from
 
-Use these unless the brief overrides them. Log any override.
-
-**Theme** — commit to light or dark and push it to the edge. Light: page luminance
-above 0.75. Dark: below 0.28. **Never land in the middle** — mid-grey reads as an
-unstyled default, because it usually is one.
-
-**Accent hue** — exactly one, by vertical:
-
-| Vertical | Hue |
-|---|---|
-| Finance, clinical, security, B2B SaaS, legal | Blue, 210–220° |
-| Field ops, logistics, trades, fuel, construction | Orange/amber, 25–45° |
-| Agriculture, sustainability, supply chain | Green, 120–160° |
-| Anything else | Blue |
-
-One accent, roughly 5–10% of the pixels, everything else neutral. No second accent.
-No gradient unless the brief asks for one.
-
-**Stack** — match the repo if one exists. Greenfield default: Vite + React + Tailwind +
-shadcn/ui + lucide icons. Do not negotiate frameworks with yourself.
-
-**Scope** — **one complete first-value loop** before any second destination. Everything
-else goes in `.ship/ROADMAP.md` as v2. *Only where the profile says modules exist* — a work
-tool with several daily jobs — does this become three modules for v1, never six.
-
-**Identity** — **none until something requires it**: privacy, sharing, sync across devices,
-ownership, payment, or permissions. Then the smallest boundary that satisfies the reason —
-a local profile before a single account, a single account before a workspace, a workspace
-before tenancy. *Only at workspace or above:* email+password (phone+OTP in emerging
-markets) and a seeded demo tenant.
-
-**Persistence** — the profile's state owner decides. Device runtime or local storage → no
-server, and the product is finished without one. A backend is earned by remote storage,
-sync, shared state, server-held secrets, external integrations, or central processing.
-
-**Layout** — derived from what the user is doing, per `layout-patterns`. *Conditional:*
-centered hero only where there is a public landing, split-screen only where there is auth,
-sidebar shell only where there are modules to move between. A product with one continuous
-surface gets none of the three.
+Read `references/defaults.md` when a decision has no signal either way — theme, accent,
+stack, identity, persistence, layout. Everything there is *conditional on the profile*
+except theme and accent, and taking a conditional default unasked is how a CLI acquires a
+login screen.
 
 ## Phase 3 — Build
 

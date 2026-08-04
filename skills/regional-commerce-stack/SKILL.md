@@ -4,6 +4,10 @@ description: >
   Use when building for one named country rather than a generic global market — local tax
   identifiers, national payment rails, messaging apps, non-Latin scripts, or phone-based
   identity.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "market=regional"
 ---
 
 # Regional commerce stack

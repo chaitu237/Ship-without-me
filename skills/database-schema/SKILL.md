@@ -3,6 +3,10 @@ name: database-schema
 description: >
   Use before writing or changing a schema, when deciding whether something is one table or two,
   when a query is slow, or when a column has to change in production.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "persistence_model=server"
 ---
 
 # Database schema

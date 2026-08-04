@@ -3,6 +3,10 @@ name: onboarding-first-run
 description: >
   Use when designing what happens immediately after signup, or when users sign up and do not
   come back.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "content_source=user-created&&consumed_via=pixels"
 ---
 
 # Onboarding and first run

@@ -74,6 +74,7 @@ const registry = {
 }
 
 let missing = []
+let drift = []
 for (const slug of dirs) {
   const f = new URL(`${slug}/SKILL.md`, root)
   if (!existsSync(f)) continue
@@ -81,6 +82,20 @@ for (const slug of dirs) {
   const desc = src.match(/description:\s*>\s*\n((?:[ \t]+.*\n)+)/)?.[1].replace(/\s+/g, ' ').trim() ?? ''
   const gate = GATES[slug]
   if (!gate) { missing.push(slug); continue }
+
+  // The gate is authoritative here, but it is ALSO written into the skill's own frontmatter
+  // so a reader of the skill can see why it would ever be selected. Two copies can disagree,
+  // so check rather than trust: a skill whose declared routing contradicts its gate is a
+  // silent mis-route waiting to happen.
+  const declaredRouting = src.match(/^\s+routing:\s*(\S+)/m)?.[1]
+  const actualRouting = gate.core ? 'core' : gate.orchestrator ? 'orchestrator' : 'conditional'
+  if (declaredRouting && declaredRouting !== actualRouting)
+    drift.push(`${slug}: frontmatter says routing "${declaredRouting}", gate says "${actualRouting}"`)
+
+  const declaredWhen = src.match(/^\s+applies-when:\s*"([^"]*)"/m)?.[1]
+  const actualWhen = (gate.applies_when || []).join(' | ')
+  if ((declaredWhen || actualWhen) && declaredWhen !== (actualWhen || undefined))
+    drift.push(`${slug}: frontmatter applies-when "${declaredWhen ?? '(none)'}" != gate "${actualWhen || '(none)'}"`)
   registry.skills[slug] = {
     description: desc,
     ...(gate.core ? { core: true } : {}),
@@ -94,6 +109,13 @@ for (const slug of dirs) {
 
 // A skill with no gate cannot be routed to, so it is invisible to the orchestrator. That is
 // a silent failure — the skill exists, passes every check, and never runs.
+if (drift.length) {
+  console.error('  ✗ skill frontmatter disagrees with its routing gate:')
+  for (const d of drift) console.error(`    ${d}`)
+  console.error('    A reader trusts the frontmatter; the router uses the gate. Make them agree.')
+  process.exit(1)
+}
+
 if (missing.length) {
   console.error(`  ✗ no routing gate for: ${missing.join(', ')}`)
   console.error('    add one to GATES in scripts/gen-registry.mjs — an ungated skill is unroutable')

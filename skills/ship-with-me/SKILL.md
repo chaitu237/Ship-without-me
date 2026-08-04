@@ -3,6 +3,9 @@ name: ship-with-me
 description: >
   Use when the user wants to build an app and has references to work from — a screenshot, a
   competitor URL, a brand guide, an existing repo, or a written spec.
+license: MIT
+metadata:
+  routing: orchestrator
 ---
 
 # Ship with me

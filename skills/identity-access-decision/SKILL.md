@@ -4,6 +4,10 @@ description: >
   Use before adding login, accounts, roles, or tenancy to anything, and whenever a build is
   about to include auth by default. Use when deciding whether a product needs identity at
   all, and which boundary is the smallest one that satisfies the reason.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "identity_model!=none"
 ---
 
 # Identity and access decision

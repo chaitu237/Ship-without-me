@@ -3,6 +3,10 @@ name: layout-patterns
 description: >
   Use before styling any screen, when a page feels empty or cramped, or when a screen is fully
   styled and still reads wrong.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "consumed_via=pixels"
 ---
 
 # Layout patterns

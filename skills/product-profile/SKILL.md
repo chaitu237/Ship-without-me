@@ -4,6 +4,9 @@ description: >
   Use before choosing architecture on any build, and whenever deciding which skills, data
   model, or checks a product needs. Use when a product does not fit the usual shapes, or
   when a build is about to add auth, a backend, or a schema by habit.
+license: MIT
+metadata:
+  routing: core
 ---
 
 # Product profile

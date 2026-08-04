@@ -4,6 +4,9 @@ description: >
   Use when running a build phase that will be reviewed, dispatching builders or reviewers,
   or deciding whether a phase is done. Use when a review needs to count as independent
   evidence, or when a phase may be re-run.
+license: MIT
+metadata:
+  routing: core
 ---
 
 # Phase execution

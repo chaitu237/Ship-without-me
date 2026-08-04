@@ -3,6 +3,10 @@ name: app-shell-composition
 description: >
   Use when building the logged-in surface of an app with more than one module, or when the app
   feels like several different apps stitched together.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "destinations>1"
 ---
 
 # App shell composition

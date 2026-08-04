@@ -4,6 +4,10 @@ description: >
   Use when an app has user accounts, or when a user cannot get back in — a forgotten password,
   an unverified email, an expired session, a lost 2FA device, or a request to delete an account
   or export its data.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "identity_model>=one authenticated user"
 ---
 
 # Account lifecycle

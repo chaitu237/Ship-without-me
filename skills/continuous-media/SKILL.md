@@ -4,6 +4,10 @@ description: >
   Use whenever audio or video plays, records, or streams — players, podcasts, voice notes,
   video lessons, calls. Use when there is a queue, a progress bar, a seek control, or
   playback that must survive navigation.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "time_model=continuous | capability=audio playback | capability=video playback"
 ---
 
 # Continuous media

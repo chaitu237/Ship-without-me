@@ -3,6 +3,10 @@ name: list-and-table
 description: >
   Use when a screen shows many records, when users ask to export data instead of working in the
   app, or when a list becomes slow or unusable on a phone.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "capability=collection browsing"
 ---
 
 # Lists and tables

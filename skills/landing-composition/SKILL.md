@@ -3,6 +3,10 @@ name: landing-composition
 description: >
   Use when building or fixing a public landing page, when visitors arrive and do not sign up, or
   when the page reads as generic.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "distribution=public&&consumed_via=pixels"
 ---
 
 # Landing composition

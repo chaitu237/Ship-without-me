@@ -3,6 +3,10 @@ name: backend-api-design
 description: >
   Use when creating server routes, when a second client is about to consume an endpoint, or when
   the frontend and backend disagree about a contract.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "persistence_model=server"
 ---
 
 # Backend API design

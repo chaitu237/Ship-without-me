@@ -3,6 +3,10 @@ name: payments-billing
 description: >
   Use before charging anyone real money, when a subscription has to renew, change, or fail, or
   when refunds, invoices, tax, or payouts are involved.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "capability=money movement"
 ---
 
 # Payments and billing

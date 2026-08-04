@@ -4,6 +4,9 @@ description: >
   Use before choosing architecture on any build, and whenever success cannot be judged from
   a static page — playback, editing, capture, live sessions, background runs. Use when a
   build "passed" but the thing it exists to do was never observed working.
+license: MIT
+metadata:
+  routing: core
 ---
 
 # Core interaction contract

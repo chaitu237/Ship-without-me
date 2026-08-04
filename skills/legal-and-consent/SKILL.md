@@ -3,6 +3,10 @@ name: legal-and-consent
 description: >
   Use before a public launch, before connecting a payment provider, before app-store submission,
   or when data-protection obligations come up.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "distribution=public&&consumed_via=pixels | collects_personal_data=true"
 ---
 
 # Legal and consent

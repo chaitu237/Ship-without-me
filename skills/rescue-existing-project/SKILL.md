@@ -3,6 +3,10 @@ name: rescue-existing-project
 description: >
   Use when handed a project that is half-finished, broken, undocumented, or inherited from
   someone else, or when nobody can say what currently works.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "repo_state=inherited"
 ---
 
 # Rescue an existing project

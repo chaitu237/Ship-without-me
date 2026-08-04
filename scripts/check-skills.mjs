@@ -28,10 +28,14 @@ for (const slug of dirs.sort()) {
   const fm = src.match(/^---\n([\s\S]*?)\n---\n/)
   if (!fm) { err(slug, 'missing YAML frontmatter'); continue }
 
+  // Name rules are the Agent Skills spec's, not ours — a name that violates them is
+  // rejected by conformant tooling elsewhere even though it loads fine here.
   const name = fm[1].match(/^name:\s*(\S+)/m)?.[1]
   if (!name) err(slug, 'frontmatter has no name')
   else if (name !== slug) err(slug, `name "${name}" does not match folder`)
-  else if (!/^[a-z][a-z0-9-]*$/.test(name)) err(slug, 'name must be kebab-case')
+  else if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(name)) err(slug, 'name must be lowercase alphanumeric and hyphens, not starting or ending with a hyphen')
+  else if (name.includes('--')) err(slug, 'name has consecutive hyphens — invalid per the Agent Skills spec')
+  else if (name.length > 64) err(slug, `name is ${name.length} chars — the spec caps it at 64`)
 
   const dm = fm[1].match(/description:\s*>\s*\n((?:[ \t]+.*\n)+)/)
   if (!dm) err(slug, 'frontmatter has no block description')
@@ -66,6 +70,22 @@ for (const slug of dirs.sort()) {
 
   // ── things that must never appear ──
   if (/!\[[^\]]*\]\(/.test(body)) err(slug, 'contains an image — skills are text only')
+
+  // A skill is prose, so a credential pasted into an example looks like documentation and
+  // survives review. It also ships: skills are published, so this leaks on install, not
+  // just in the repo. The detector scans a user's project; nothing scanned ours.
+  for (const [re, label] of [
+    [/\bsk-[A-Za-z0-9]{20,}/, 'API secret key'],
+    [/\bAKIA[0-9A-Z]{16}\b/, 'AWS access key id'],
+    [/\bgh[pousr]_[A-Za-z0-9]{30,}/, 'GitHub token'],
+    [/\bnpm_[A-Za-z0-9]{30,}/, 'npm token'],
+    [/-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/, 'private key'],
+  ]) if (re.test(body)) err(slug, `${label} appears in the skill body`)
+
+  // The spec's optional fields. Absent is legal, so these are warnings — but a published
+  // skill with no licence leaves a reuser guessing, and one with real environment
+  // requirements that does not say so fails confusingly on a host that lacks them.
+  if (!/^license:/m.test(fm[1])) warn(slug, 'no license field — the spec allows it and a published skill should carry one')
   // Orchestrators implement a full protocol and legitimately run longer than a domain skill.
   // Raised 750 → 900 when the unattended orchestrator gained the stop receipt, the run
   // budget, and profile-driven skill selection. Everything reusable was extracted first

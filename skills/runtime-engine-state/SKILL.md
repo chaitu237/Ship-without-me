@@ -4,6 +4,10 @@ description: >
   Use whenever the browser or device owns state your UI displays — audio, video, camera,
   microphone, geolocation, canvas, workers, bluetooth, WebRTC, native bridges. Use when
   playback, capture, or a permission-gated device is involved, or when UI and hardware disagree.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "state_owner=device runtime"
 ---
 
 # Runtime-owned state

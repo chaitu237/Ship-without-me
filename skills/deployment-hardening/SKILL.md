@@ -3,6 +3,10 @@ name: deployment-hardening
 description: >
   Use before real users depend on a deploy, or when asking whether something is production
   ready.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "deployed=true"
 ---
 
 # Deployment hardening

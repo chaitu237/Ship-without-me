@@ -3,6 +3,10 @@ name: grounded-ai-feature
 description: >
   Use when an LLM's output will be shown to a user or acted on, when answers vary between runs,
   or when the model asserts things that are not true.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "capability=model output"
 ---
 
 # Grounded AI feature

@@ -3,6 +3,10 @@ name: states-and-feedback
 description: >
   Use when a screen fetches or changes data, when an app feels broken with no obvious error,
   when a new user sees a blank screen, or before adding a confirmation dialog.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "consumed_via=pixels"
 ---
 
 # States and feedback

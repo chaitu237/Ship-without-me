@@ -3,6 +3,10 @@ name: initial-content-bootstrap
 description: >
   Use when an app is empty on day one and needs records, listings, documents, or examples
   before it is useful to anyone, or when asked to acquire or import data to fill it.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "content_source!=user-created"
 ---
 
 # Initial content bootstrap

@@ -3,6 +3,10 @@ name: feed-and-social
 description: >
   Use when one user's content will appear on another user's screen — a feed, a timeline, a
   community, a forum, comments, or any user-generated content.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "capability=user to user reach"
 ---
 
 # Feeds and social surfaces

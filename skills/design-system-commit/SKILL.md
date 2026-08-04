@@ -3,6 +3,10 @@ name: design-system-commit
 description: >
   Use before the first UI component exists, or when an interface looks generic, unstyled, or
   like every other AI-generated app.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "consumed_via=pixels"
 ---
 
 # Design system: commit

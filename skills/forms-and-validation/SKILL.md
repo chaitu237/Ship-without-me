@@ -3,6 +3,10 @@ name: forms-and-validation
 description: >
   Use when building or fixing any form, when users abandon one partway through, when input is
   lost on an error, or when duplicate records appear.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "capability=data entry"
 ---
 
 # Forms and validation

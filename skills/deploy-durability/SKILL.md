@@ -3,6 +3,10 @@ name: deploy-durability
 description: >
   Use when a deployed app is unreachable, intermittently down, or behaves differently in
   production than it does locally.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "deployed=true"
 ---
 
 # Deploy durability

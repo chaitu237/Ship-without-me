@@ -3,6 +3,10 @@ name: vertical-business-os
 description: >
   Use when building an all-in-one operations platform for one specific trade, or when a request
   names three or more operational modules at once.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "value_location=operational records"
 ---
 
 # Vertical business OS

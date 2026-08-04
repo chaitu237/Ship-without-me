@@ -3,6 +3,10 @@ name: tenant-auth-demo
 description: >
   Use when more than one customer's data will live in the same database, when adding login or
   roles, or when strangers should be able to try the app without signing up.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "identity_model>=workspace"
 ---
 
 # Tenant, auth, demo

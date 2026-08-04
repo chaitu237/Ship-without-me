@@ -115,7 +115,26 @@ Full methodology: [`docs/evaluation.md`](../docs/evaluation.md).
 Long enough to derive, short enough to hold. Roughly 100–200 lines. If it is longer, it is
 probably two skills, or it has grown a catalogue.
 
-### When you split one skill out of another, the pointer must be unusable on its own
+### Two ways to split, and they are not interchangeable
+
+The Agent Skills spec keeps `SKILL.md` under ~500 lines and moves detail into
+`references/`, loaded on demand. That is the right tool for **material that is consulted**
+— a lookup table, a framing taxonomy, a worked example set. It stays owned by the one skill
+that uses it.
+
+Extracting a whole new **skill** is for material another skill would otherwise duplicate.
+`product-profile` and `phase-execution` earned that because both orchestrators need them
+identically; a second copy would have drifted. A lookup table used by one skill has not
+earned it, and promoting it to a skill puts a routing decision in front of a table nobody
+needs to route to.
+
+```
+Would a different skill need this same content?
+├─ yes ─► extract a skill. It gets a description, a gate, and its own symptom table.
+└─ no ──► references/<name>.md. No frontmatter, no gate, loaded by the owner on demand.
+```
+
+### When you split, the pointer must be unusable on its own
 
 Splitting is the right fix for an over-long skill. It fails in a specific way: the author,
 wanting the pointer to be helpful, summarises what moved — and the summary is *just* enough

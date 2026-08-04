@@ -3,6 +3,10 @@ name: field-ops-mobile
 description: >
   Use when the people using this work away from a desk — on a road, a farm, a site, or a shop
   floor — or when connectivity, sunlight, gloves, or shared devices are part of the situation.
+license: MIT
+metadata:
+  routing: conditional
+  applies-when: "context=away from desk"
 ---
 
 # Field ops mobile
