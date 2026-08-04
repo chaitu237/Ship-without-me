@@ -17,9 +17,10 @@ This closes that gap two ways: **32 agent skills** that decide correctly instead
 options, and **`ship detect`** — a launch-readiness checker with no model, no API key, and
 no dependencies.
 
-Six of those skills run for every product. The other 26 are selected by what is true about
-*this* product — so a local music player does not get a login screen, a database, and a
-marketing page it never needed.
+Three of those skills run for every product — what is this, what proves it works, how a
+phase is run and reviewed. The other 32 are selected by what is true about *this* product,
+so a local music player does not get a login screen and a marketing page it never needed,
+and a CLI does not get a theme.
 
 ---
 
@@ -175,7 +176,7 @@ Exit codes: `0` clean · `1` failures · `2` nothing to check. Full rule referen
 
 Each is a folder under [`skills/`](skills/) containing a single `SKILL.md`.
 
-Six run for every product. The rest are gated on a property of the profile — `npm run plan`
+Three run for every product. The rest are gated on a property of the profile — `npm run plan`
 shows which, for any profile.
 
 **Orchestrators**

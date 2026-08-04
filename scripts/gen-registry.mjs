@@ -18,13 +18,21 @@ const check = process.argv.includes('--check')
 // is true, never because the product resembles something. A skill with no gate is core —
 // it runs for every product, and that is a deliberate claim, not a missing field.
 const GATES = {
+  // Genuinely universal: what is this, what proves it works, how a phase is run and reviewed.
+  // Nothing else survives contact with a CLI, a library, a pipeline, or a report.
   'product-profile':           { core: true },
   'core-interaction-contract': { core: true },
   'phase-execution':           { core: true },
-  'design-system-commit':      { core: true },
-  'layout-patterns':           { core: true },
-  'frontend-architecture':     { core: true },
-  'states-and-feedback':       { core: true },
+
+  // These four were core until an end-to-end CLI build refused them by name, correctly:
+  // "binding surface is terminal, not pixels". Design tokens, layout archetypes, client
+  // state ownership and rendered loading/empty/error states are what the floor MEANS for a
+  // rendered surface — they are not universal truths, and running them for a CLI produces a
+  // theme nobody sees. The terminal's equivalents live in cli-surface.
+  'design-system-commit':     { applies_when: ['consumed_via=pixels'], provides: ['design tokens'] },
+  'layout-patterns':          { applies_when: ['consumed_via=pixels'], provides: ['layout archetype'] },
+  'frontend-architecture':    { applies_when: ['consumed_via=pixels'], provides: ['client state ownership'] },
+  'states-and-feedback':      { applies_when: ['consumed_via=pixels'], provides: ['async states'] },
 
   'identity-access-decision': { applies_when: ['identity_model!=none'], provides: ['identity boundary'] },
   'tenant-auth-demo':         { applies_when: ['identity_model>=workspace'], requires: ['identity-access-decision'], provides: ['tenant isolation', 'demo access'] },

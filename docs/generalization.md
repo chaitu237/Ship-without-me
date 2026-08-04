@@ -24,12 +24,16 @@ its own — which is the whole difference between a derivation and a catalogue.
 
 ## What selects the build
 
-Six properties, derived with `product-profile`, written to `.ship/PROFILE.json`:
+Seven properties, derived with `product-profile`, written to `.ship/PROFILE.json`:
 
 ```text
-where value happens · who owns the truth · how time behaves ·
+how it's reached · where value happens · who owns the truth · how time behaves ·
 where content comes from · what identity boundary exists · what loop proves it works
 ```
+
+**"How it's reached" — the binding surface — is the one that stops a rendered-UI floor being
+handed to a CLI, a library, or a report.** A viewport width and a focus ring are what
+discoverability *means* for pixels, not universal truths.
 
 `core_capabilities` is the load-bearing field. It names what the product must **do**, never
 what it is about — `audio playback`, not `music` — because a capability maps to a skill and
@@ -37,33 +41,40 @@ a check, while a subject maps to nothing.
 
 ## The core is small on purpose
 
-Of 32 skills, **6 run for every product**. The rest are gated:
+Of 35 skills, **3 run for every product**. The rest are gated:
 
 ```bash
 npm run plan .ship/PROFILE.json
 ```
 
 ```text
-core         product-profile · core-interaction-contract · design-system-commit
-             layout-patterns · frontend-architecture · states-and-feedback
+core         product-profile · core-interaction-contract · phase-execution
 conditional  runtime-engine-state · continuous-media · list-and-table
+             design-system-commit · layout-patterns · frontend-architecture
 gaps         (none)
 ```
+
+Design tokens, layout archetypes and rendered async states are **not** core. They were,
+until an end-to-end CLI build refused them by name — *"binding surface is terminal, not
+pixels"* — which was correct and the registry was not. They are what the floor *means* for a
+rendered surface, so they are gated on one.
 
 A property the profile says is absent earns nothing. That is the entire mechanism.
 
 ## The negative assertions are the valuable ones
 
-`npm run test:routing` checks four unrelated shapes. That a music player selects
+`npm run test:routing` checks six unrelated shapes. That a music player selects
 `continuous-media` is unsurprising. That it selects **no** auth, **no** schema, **no**
 backend and **no** landing page is the claim worth testing:
 
 | Shape | Selects | Correctly avoids |
 |---|---|---|
-| local music player | 9 | 8 |
-| restaurant menu catalogue | 13 | 6 |
-| multi-tenant repair shop ops | 20 | 2 |
-| offline notes, single device | 8 | 7 |
+| local CLI tool | 5 | 12 |
+| published library | 4 | 13 |
+| offline notes, single device | 9 | 7 |
+| local music player | 10 | 8 |
+| restaurant menu catalogue | 14 | 6 |
+| multi-tenant repair shop ops | 21 | 2 |
 
 It runs in milliseconds with no model and no API key, so it is a real gate rather than an
 aspiration.

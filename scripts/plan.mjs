@@ -89,7 +89,8 @@ const CASES = [
     },
     must: ['cli-surface'],
     must_not: ['landing-composition', 'ship-ready-audit', 'tenant-auth-demo', 'database-schema',
-               'library-surface', 'app-shell-composition', 'account-lifecycle', 'legal-and-consent'],
+               'library-surface', 'app-shell-composition', 'account-lifecycle', 'legal-and-consent',
+               'design-system-commit', 'layout-patterns', 'frontend-architecture', 'states-and-feedback'],
   },
   {
     name: 'published library',
@@ -104,7 +105,8 @@ const CASES = [
     must: ['library-surface'],
     must_not: ['landing-composition', 'ship-ready-audit', 'cli-surface', 'tenant-auth-demo',
                'database-schema', 'app-shell-composition', 'account-lifecycle', 'legal-and-consent',
-               'onboarding-first-run'],
+               'onboarding-first-run', 'design-system-commit', 'layout-patterns',
+               'frontend-architecture', 'states-and-feedback'],
   },
 
   {
@@ -118,7 +120,8 @@ const CASES = [
       identity_model: 'none', persistence_model: 'local', distribution: 'private',
       core_capabilities: ['file import', 'audio playback', 'queue management'],
     },
-    must: ['continuous-media', 'runtime-engine-state'],
+    must: ['continuous-media', 'runtime-engine-state', 'design-system-commit', 'layout-patterns',
+           'frontend-architecture', 'states-and-feedback'],
     must_not: ['tenant-auth-demo', 'account-lifecycle', 'database-schema', 'backend-api-design',
                'landing-composition', 'ship-ready-audit', 'vertical-business-os', 'identity-access-decision'],
   },
@@ -161,7 +164,7 @@ const CASES = [
       identity_model: 'none', persistence_model: 'local', distribution: 'private',
       core_capabilities: ['data entry'],
     },
-    must: ['forms-and-validation', 'onboarding-first-run'],
+    must: ['forms-and-validation', 'onboarding-first-run', 'design-system-commit', 'states-and-feedback'],
     must_not: ['database-schema', 'backend-api-design', 'tenant-auth-demo', 'landing-composition',
                'account-lifecycle', 'identity-access-decision', 'vertical-business-os'],
   },

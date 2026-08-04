@@ -101,7 +101,12 @@
     },
     "design-system-commit": {
       "description": "Use before the first UI component exists, or when an interface looks generic, unstyled, or like every other AI-generated app.",
-      "core": true,
+      "applies_when": [
+        "consumed_via=pixels"
+      ],
+      "provides": [
+        "design tokens"
+      ],
       "has_eval": false
     },
     "feed-and-social": {
@@ -136,7 +141,12 @@
     },
     "frontend-architecture": {
       "description": "Use when starting a frontend, when state has become tangled or duplicated, when the app refetches on every navigation, or when one change re-renders everything.",
-      "core": true,
+      "applies_when": [
+        "consumed_via=pixels"
+      ],
+      "provides": [
+        "client state ownership"
+      ],
       "has_eval": false
     },
     "grounded-ai-feature": {
@@ -181,7 +191,12 @@
     },
     "layout-patterns": {
       "description": "Use before styling any screen, when a page feels empty or cramped, or when a screen is fully styled and still reads wrong.",
-      "core": true,
+      "applies_when": [
+        "consumed_via=pixels"
+      ],
+      "provides": [
+        "layout archetype"
+      ],
       "has_eval": false
     },
     "legal-and-consent": {
@@ -297,7 +312,12 @@
     },
     "states-and-feedback": {
       "description": "Use when a screen fetches or changes data, when an app feels broken with no obvious error, when a new user sees a blank screen, or before adding a confirmation dialog.",
-      "core": true,
+      "applies_when": [
+        "consumed_via=pixels"
+      ],
+      "provides": [
+        "async states"
+      ],
       "has_eval": false
     },
     "tenant-auth-demo": {
