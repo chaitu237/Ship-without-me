@@ -77,6 +77,51 @@ export function plan(profile) {
 }
 
 const CASES = [
+  // The three below are profiles produced by REAL unattended runs, not invented fixtures.
+  // Two gate bugs were found by diffing what the agent selected against what this resolver
+  // did: tenant-auth-demo fired for a single-clinic workspace, and initial-content-bootstrap
+  // fired for a scheduled pipeline with no rendered surface.
+  {
+    name: 'habit tracker (minimal brief)',
+    profile: {
+      consumed_via: 'pixels, through rendered UI', first_value_event: 'user marks a habit done and sees the streak',
+      value_location: 'one screen', state_owners: ['local persistent storage'],
+      time_model: 'event-driven', content_source: 'user-created',
+      identity_model: 'none', persistence_model: 'local', distribution: 'private',
+      core_capabilities: ['data entry'],
+    },
+    must: ['design-system-commit', 'layout-patterns', 'states-and-feedback', 'onboarding-first-run'],
+    must_not: ['database-schema', 'backend-api-design', 'tenant-auth-demo', 'account-lifecycle',
+               'identity-access-decision', 'landing-composition', 'ship-ready-audit', 'cli-surface'],
+  },
+  {
+    name: 'scheduled CSV rollup',
+    profile: {
+      consumed_via: 'a schedule, nobody watching', first_value_event: 'a weekly summary file appears, correct on a rerun',
+      value_location: 'a background run', state_owners: ['local persistent storage'],
+      time_model: 'scheduled', content_source: 'user-owned import',
+      identity_model: 'none', persistence_model: 'local', distribution: 'cli',
+      core_capabilities: ['csv ingestion', 'idempotent write'],
+    },
+    must: [],
+    must_not: ['design-system-commit', 'layout-patterns', 'frontend-architecture', 'states-and-feedback',
+               'initial-content-bootstrap', 'landing-composition', 'forms-and-validation',
+               'database-schema', 'account-lifecycle', 'onboarding-first-run'],
+  },
+  {
+    name: 'internal clinic tool (detailed brief)',
+    profile: {
+      consumed_via: 'pixels, through rendered UI', first_value_event: 'reception books an appointment with no clash',
+      value_location: 'a sequence', state_owners: ['an app server'],
+      time_model: 'transactional', content_source: 'user-created',
+      identity_model: 'workspace', persistence_model: 'server', distribution: 'internal',
+      core_capabilities: ['data entry', 'collection browsing'],
+    },
+    must: ['database-schema', 'backend-api-design', 'identity-access-decision', 'account-lifecycle',
+           'design-system-commit', 'layout-patterns'],
+    must_not: ['tenant-auth-demo', 'landing-composition', 'ship-ready-audit',
+               'cli-surface', 'library-surface', 'continuous-media'],
+  },
   {
     name: 'local CLI tool',
     profile: {

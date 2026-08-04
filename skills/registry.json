@@ -172,7 +172,7 @@
     "initial-content-bootstrap": {
       "description": "Use when an app is empty on day one and needs records, listings, documents, or examples before it is useful to anyone, or when asked to acquire or import data to fill it.",
       "applies_when": [
-        "content_source!=user-created"
+        "content_source!=user-created&&consumed_via=pixels"
       ],
       "provides": [
         "day-one content"
@@ -323,7 +323,7 @@
     "tenant-auth-demo": {
       "description": "Use when more than one customer's data will live in the same database, when adding login or roles, or when strangers should be able to try the app without signing up.",
       "applies_when": [
-        "identity_model>=workspace"
+        "identity_model=multi-tenant"
       ],
       "requires": [
         "identity-access-decision"

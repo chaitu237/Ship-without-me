@@ -6,7 +6,7 @@ description: >
 license: MIT
 metadata:
   routing: conditional
-  applies-when: "content_source!=user-created"
+  applies-when: "content_source!=user-created&&consumed_via=pixels"
 ---
 
 # Initial content bootstrap

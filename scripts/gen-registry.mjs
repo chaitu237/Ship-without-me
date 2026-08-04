@@ -35,7 +35,11 @@ const GATES = {
   'states-and-feedback':      { applies_when: ['consumed_via=pixels'], provides: ['async states'] },
 
   'identity-access-decision': { applies_when: ['identity_model!=none'], provides: ['identity boundary'] },
-  'tenant-auth-demo':         { applies_when: ['identity_model>=workspace'], requires: ['identity-access-decision'], provides: ['tenant isolation', 'demo access'] },
+  // Was identity_model>=workspace, which handed tenant-isolation machinery to a single
+  // clinic with staff accounts. identity-access-decision defines workspace as "one customer,
+  // one space" and routes only MULTI-TENANT here. Found by a real run: the agent skipped
+  // tenancy correctly while this gate would have selected it.
+  'tenant-auth-demo':         { applies_when: ['identity_model=multi-tenant'], requires: ['identity-access-decision'], provides: ['tenant isolation', 'demo access'] },
   'account-lifecycle':        { applies_when: ['identity_model>=one authenticated user'], requires: ['identity-access-decision'], provides: ['account journey'] },
   'database-schema':          { applies_when: ['persistence_model=server'], provides: ['durable schema'] },
   'backend-api-design':       { applies_when: ['persistence_model=server'], requires: ['database-schema'], provides: ['http surface'] },
@@ -45,7 +49,9 @@ const GATES = {
   'forms-and-validation':     { applies_when: ['capability=data entry'], provides: ['input surface'] },
   'app-shell-composition':    { applies_when: ['destinations>1'], provides: ['persistent surface'] },
   'onboarding-first-run':     { applies_when: ['content_source=user-created&&consumed_via=pixels'], provides: ['first run'] },
-  'initial-content-bootstrap':{ applies_when: ['content_source!=user-created'], provides: ['day-one content'] },
+  // Needs a rendered surface: "what does the user see before there is data" is not a
+  // question a scheduled pipeline has. Its input files ARE its content.
+  'initial-content-bootstrap':{ applies_when: ['content_source!=user-created&&consumed_via=pixels'], provides: ['day-one content'] },
   'landing-composition':      { applies_when: ['distribution=public&&consumed_via=pixels'], provides: ['acquisition surface'] },
   'ship-ready-audit':         { applies_when: ['distribution=public&&consumed_via=pixels'], provides: ['launch surface'] },
   'legal-and-consent':        { applies_when: ['distribution=public&&consumed_via=pixels', 'collects_personal_data=true'], provides: ['consent record'] },

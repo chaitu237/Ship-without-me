@@ -6,7 +6,7 @@ description: >
 license: MIT
 metadata:
   routing: conditional
-  applies-when: "identity_model>=workspace"
+  applies-when: "identity_model=multi-tenant"
 ---
 
 # Tenant, auth, demo
