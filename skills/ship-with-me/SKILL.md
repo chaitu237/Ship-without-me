@@ -186,6 +186,25 @@ The user wins. Say it once, in one line, then comply:
 
 Do not re-argue it later. Do not quietly revert to your preference during the build.
 
+### Record what the user settled, so no later phase re-opens it
+
+A build runs across phases and fresh contexts. A decision the user actually examined is the
+most expensive thing in the run to have obtained — and the easiest to lose, because the
+agent that re-opens it in Phase 3 was not present in Phase 2 and sees only an unexplained
+choice it would have made differently.
+
+In `.ship/DECISIONS.md`, mark provenance on every entry:
+
+| Mark | Means | What later phases may do |
+|---|---|---|
+| `settled` | The user was shown the tradeoff and chose | **Never re-ask. Never revert.** Contradict only on new evidence, and then surface it rather than acting |
+| `directed` | The user asserted it without being shown alternatives | May be challenged **once**, with the tradeoff they did not see. Then it is settled |
+| `derived` | You concluded it from a reference or a property | Freely revisited as understanding improves |
+
+**Never mark your own inference `settled`.** That launders a guess into the user's authority,
+and it is unrecoverable later — nobody can tell afterwards which choices were actually
+theirs. The distinction is what makes the log worth keeping across contexts.
+
 ## Phase 3 — Confirm, then build
 
 Write `.ship/PROFILE.json`, `.ship/FIRST_VALUE.md`, `.ship/BRIEF.md` and
@@ -214,6 +233,15 @@ exist yet. Where there is no server, none of that is built at all.
 
 Commit after each phase. Report progress as you go; the user is here and wants to see it.
 
+**Load `phase-execution` and follow it for every phase.** Being present for the build does
+not replace the review roles — a user watching progress scroll past is not reviewing scope,
+and "they would have said something" is not a check. It holds the role order, the
+independence rule, the outcome vocabulary, and the idempotency check before any re-run.
+
+The one thing that differs here: when a review finds something, **the user is available**,
+so a finding that would be a logged assumption in an unattended run is a question worth
+asking — if it clears the bar in Phase 2.
+
 ## Phase 4 — Verify
 
 ```bash
@@ -221,19 +249,19 @@ ship detect --strict
 ship verify
 ```
 
-Plus, because this run had references: **check fidelity against them.** Screenshot the
-built app and compare theme and accent to the reference. If they diverge, either fix it
-or tell the user why you diverged.
+Plus, because this run had references: **check fidelity against them.** Compare the built
+result to the reference on the dimensions the reference actually specified. If they diverge,
+either fix it or tell the user why you diverged.
 
-Non-negotiable exits:
+Non-negotiable exits: **the floor for this profile's binding surface, plus every conditional
+pack the profile turned on** — see `AGENTS.md`. The floor is universal; what satisfies it is
+not. Where the surface is pixels that means a real title and meta description, an absolute
+`og:image`, an `<h1>` before JS runs, something rendered with JS disabled, and zero console
+errors on first paint — plus `/privacy` and `/terms` where the legal pack applies, and
+tenant isolation where tenancy does. Where the surface is a terminal, an import, a schedule
+or a document, it is that surface's floor instead.
 
-- Real title, meta description, canonical, favicon. Not a framework default.
-- `og:image` present and absolute — the share link must not be a blank card.
-- At least one `<h1>` in served HTML, before JS runs.
-- `/privacy` and `/terms` exist and return 200.
-- Tenant-A rows invisible to a tenant-B session, on every table.
-- The app renders something with JS disabled.
-- Zero console errors on first paint.
+Reporting the pixel list as passed on a CLI verifies nothing the user asked for.
 
 ## Phase 5 — Hand over
 
