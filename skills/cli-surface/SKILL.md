@@ -67,11 +67,19 @@ exists for.
 
 ## Verify
 
-Automated:
-- `--help` and `--version` both exit 0 and print something
+Automated — assert on the *content*, never on "it printed":
+- `--help` and `--version` exit 0 and print **exactly one** usage block. A doubled banner
+  means the entry point runs twice, which also means the work runs twice.
+- `--json` output is **piped into a real parser and parses**. "It emitted JSON-looking text"
+  is not the check; two concatenated objects look fine on a terminal and fail every consumer.
 - A deliberately-wrong invocation exits nonzero and the message goes to stderr
-- Piping the tool's stdout into another process consumes only data, not logs
+- **Malformed or unreadable input exits nonzero**, not 0-with-a-stderr-line. Unattended,
+  the exit code is the only signal anyone acts on; a warning nobody reads is silence.
+- Piping stdout into another process consumes only data, not logs
 - Running with `< /dev/null` (no TTY) does not hang
+- The module is imported **without** executing `main`. A CLI whose entry point fires on
+  import runs twice when a bin wrapper also calls it — and unit tests that import the
+  module never see it, because they only ever call `main` once themselves.
 
 Judgement:
 - Would a script author trust this tool's exit code without reading its source?
@@ -87,6 +95,9 @@ Judgement:
 | Users paste `--help` output into an issue asking what a flag does | `--help` text is a summary, not real documentation |
 | A script that worked yesterday breaks after an update | An undocumented output format change with no `--json` contract |
 | The tool got a theme, a viewport breakpoint, or a login screen | The binding surface was never derived — see `product-profile` |
+| Banner or usage text appears twice | Entry point executes on import AND from the bin wrapper — the work runs twice too |
+| `--json` looks right but no consumer can parse it | Two runs concatenated their output; asserted on presence, not on parsing |
+| A cron job reports success while producing nothing usable | Malformed input exited 0 with a stderr warning nobody reads |
 
 ## Don't
 

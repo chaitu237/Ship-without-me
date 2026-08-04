@@ -651,13 +651,66 @@ Where it is a terminal, an import, a schedule, or a document, the exits are that
 floor instead — and a run that reports the pixel list as passed on a CLI has verified
 nothing it needed to.
 
-### Re-read the failure condition
+### Re-read the failure condition — and do not be the one who clears it
 
 Phase 0c named what would make this **technically complete and practically useless**. Read
 it again now, against what exists. Every check above can pass while that condition is true.
 
 If it is true, say so in the report as the headline finding. A green check suite on a
 useless app is the most expensive possible outcome, because nobody looks again.
+
+**The verdict on this is dispatched, not self-assessed.** You have spent the whole run
+gathering evidence that things work; asked whether your own build fails, you will reach for
+that same evidence, and that evidence is the nominal path. The failure condition describes
+the case you did not build for — so the honest verdict needs someone who did not build it.
+
+```
+Send a fresh context: the failure condition, the artefact, and NOTHING else.
+Not your report, not your test results, not your decisions log — those carry the
+framing that produced the wrong answer.
+Ask one question: "is this condition true of this artefact?"
+Its job is to make the condition TRUE, not to confirm it is false.
+```
+
+**The observed failure this prevents.** A scheduled job whose brief said *"must not
+double-count if it runs twice"* wrote, in its own report: *"Is it true? **No.** Second run
+produces identical SHA-256."* Both halves of its failure condition were true. The evidence
+cited was two runs over unchanged input — the one case where the bug cannot appear. The step
+ran, the reasoning was legible, and the answer was wrong, because the same context that
+chose the evidence also graded it.
+
+### Evidence for a named-critical requirement must be adversarial
+
+When the brief says something **must not break**, nominal-path evidence does not address it.
+"It worked twice in a row" is not evidence about double-counting; it is evidence about the
+one input where double-counting is impossible.
+
+```
+For each thing the brief named as critical:
+├─ what input would produce the failure, if the failure existed?
+├─ construct exactly that input — changed timestamps, a removed source, a partial
+│   run, a duplicate under another name, a value that does not parse
+└─ the evidence is that run, not the happy one. If you cannot construct such an
+    input, say so — that is a real limit, and it is not the same as a pass.
+```
+
+A `must not` with only happy-path evidence is **unverified**, and the report says so in
+those words rather than reporting it as passing.
+
+### A gap in the named-critical requirement cannot go to the roadmap
+
+`.ship/ROADMAP.md` is for scope that was deferred. It is **not** where a known hole in the
+thing the brief called critical goes. That same run listed "exit non-zero when any file is
+skipped" under *Next* — while its own failure condition named silent skipping as the
+failure. Deferring the critical requirement and reporting success is the failure condition,
+not a plan to address it.
+
+```
+Is this gap in something the brief named as must-not-break?
+├─ no ──► ROADMAP, and say so in the report
+└─ yes ─► the completion state is `done, gaps logged` AT BEST, and the gap is the
+           report's headline — never a roadmap line under a green summary.
+```
 
 ### Test the failure paths, not only the happy one
 
