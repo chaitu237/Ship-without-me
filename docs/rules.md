@@ -2,7 +2,7 @@
 
 Generated from `cli/detect.mjs` by `scripts/gen-rules-doc.mjs`. Do not edit by hand.
 
-**51 rules across 12 groups.**
+**53 rules across 14 groups.**
 
 ```bash
 npx ship-without-me detect                          # auto-detect what to check
@@ -11,7 +11,7 @@ npx ship-without-me detect --json                   # machine-readable, for CI
 npx ship-without-me detect --strict                 # warnings fail the build too
 ```
 
-Groups: `launch` · `deploy` · `schema` · `spine` · `frontend` · `design` · `forms` · `states` · `account` · `legal` · `api` · `list`
+Groups: `launch` · `deploy` · `schema` · `spine` · `frontend` · `design` · `forms` · `states` · `account` · `legal` · `api` · `list` · `cli` · `library`
 
 ## Waivers
 
@@ -32,6 +32,7 @@ The reason is required — a bare rule id is not honoured. Exit codes: `0` clean
 | Rule | Level | Groups | What it catches |
 |---|---|---|---|
 | `bad-status` | **fail** | launch | returned HTTP ${res.status} |
+| `cli-no-help` | warn | cli | bin entry has no --help/-h handling found |
 | `consent-prechecked` | **fail** | legal | terms/consent checkbox appears pre-checked — that is not consent |
 | `cors-wildcard-credentials` | **fail** | api | CORS wildcard origin combined with credentials |
 | `css-bloat` | warn | deploy | ${css.toFixed(0)} KB of CSS — utility-framework purge is likely misconfigured |
@@ -47,6 +48,7 @@ The reason is required — a bare rule id is not honoured. Exit codes: `0` clean
 | `hashed-asset-not-cached` | warn | deploy | content-hashed asset sent with no-store/no-cache — repeat visits redownload everything |
 | `inputs-without-labels` | **fail** | forms | ${inputs.length} inputs and no <label> or aria-label |
 | `js-oversize` | **fail** | deploy | ${js.toFixed(0)} KB of JS on first load (budget 400 KB raw) |
+| `library-no-types` | warn | library | TypeScript source present but no  |
 | `long-title` | warn | launch | <title> is ${title.length} chars (aim for <=60) |
 | `missing-legal` | **fail** | legal | no /privacy route — payment gateways and app stores require it |
 | `missing-legal-terms` | **fail** | legal | no /terms route |

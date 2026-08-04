@@ -12,6 +12,7 @@
     "content_source",
     "identity_model",
     "persistence_model",
+    "consumed_via",
     "core_capabilities"
   ],
   "additionalProperties": true,
@@ -32,6 +33,19 @@
         "a physical outcome",
         "an answered question",
         "consumed content"
+      ]
+    },
+    "consumed_via": {
+      "type": "string",
+      "description": "The binding surface \u2014 how the deliverable is actually reached. This is what a rendered-UI floor (theme, viewport, focus ring) silently assumed for every product. It also determines which Evidence types are valid: browser_assertion for pixels, unit_assertion/command_exit for an import or a terminal, citation_verified/independent_reproduction for a written artifact. A build may have MORE THAN ONE binding surface at once (a library that ships a CLI and a docs site) \u2014 see product-profile's 'Composed deliverables'. Do not force a multi-surface build into one value.",
+      "examples": [
+        "pixels, through rendered UI",
+        "a terminal, through argv/exit",
+        "an import, through a module",
+        "a network call, through a wire",
+        "a schedule, nobody watching",
+        "a physical system",
+        "a reader, through a document"
       ]
     },
     "state_owners": {

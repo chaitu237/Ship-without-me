@@ -61,7 +61,21 @@ Everything from Phase 0 onward is Deep mode.
 ### The stop receipt — what to do instead of defaulting past a fork
 
 Not every unknown deserves this. Most do not: an unresolved *preference* gets a default and
-a log line, which is the whole promise of an unattended run. The test is different:
+a log line, which is the whole promise of an unattended run. But check this **before** the
+size test below, not after — size is about how expensive being wrong is to fix; this is
+about whether it can be fixed at all:
+
+```
+Does the ACTION this decision leads to have effect outside the repo's own version control?
+  (infrastructure state, a live payment, a message sent, a physical actuation, data written
+  somewhere this run cannot revert)
+├─ yes ─► criticality is irreversible BY DEFINITION, regardless of how small it looks.
+│         "one resource," "one row," "one message" is not "reversible in minutes" once
+│         the effect has left the repo. Route to policy.json (below) or STOP RECEIPT.
+│         Never let this fall through to the size test — that is how a small-looking
+│         infrastructure change gets defaulted like a CSS token.
+└─ no ──► ordinary size test:
+```
 
 ```
 If this assumption is wrong, what is lost?
@@ -121,6 +135,8 @@ quietly drop scope to fit — say which it was.
   "publish_registry": { "allowed": false },
   "production_data":  { "allowed": false, "note": "only data this run created" },
   "network_write":    { "allowed": false },
+  "infra_mutation":   { "allowed": false, "reason": "provisions or changes state outside this repo" },
+  "physical_action":  { "allowed": false, "reason": "actuates, prints, ships, or otherwise affects the physical world" },
   "domains_fetched":  []
 }
 ```
@@ -193,8 +209,11 @@ Who benefits, and from what?
      competitor = everything else competing for that attention
 ```
 
-If two shapes apply, the product is two products. Pick the one that carries the first
-value event and log the other as Not now.
+If two shapes apply **and only one is being built right now**, the product is two products
+— pick the one that carries the first value event and log the other as Not now. That is a
+phasing call. It is the wrong call if both are being built *in this run*: a library shipped
+with its own CLI and docs site is not phased, it is composed, and flattening it to one shape
+is how the CLI silently inherits a database schema meant for the docs site. See 0b-ii.
 
 **The shape frames the product. It does not choose the architecture.** A music player and
 a habit tracker are both PERSONAL PRODUCT and share almost no technical requirement. Eight
@@ -203,9 +222,13 @@ allowed to branch on. Derive the properties.
 
 ### 0b-ii. Derive the product profile — this is what selects the build
 
-Invoke **`product-profile`**. It derives six properties of this situation, writes
-`.ship/PROFILE.json`, and resolves the capability map — including the capabilities nothing
-here covers, which become gaps rather than improvisations.
+Invoke **`product-profile`**. It derives seven properties of this situation — including
+**how the deliverable is reached** (pixels, a terminal, an import, a network call, a
+schedule, a physical system, a written document), which is what stops a rendered-UI floor
+from being applied to a CLI or a library. It writes `.ship/PROFILE.json` — a list, one entry
+per binding surface, if the brief genuinely composes several deliverables in this run — and
+resolves the capability map, including the capabilities nothing here covers, which become
+gaps rather than improvisations.
 
 The output drives Phase 2's skill graph and Phase 4's verification packs. Do not proceed
 past it with an essential capability unowned.

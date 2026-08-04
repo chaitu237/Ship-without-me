@@ -19,11 +19,12 @@ Everything below applies to both, and to any app you touch.
 
 ## Derive the profile first — it selects everything else
 
-Never ask "what known kind of app is this closest to?". Ask what is true about it. Six
+Never ask "what known kind of app is this closest to?". Ask what is true about it. Seven
 properties, answered before any architecture is chosen, written to `.ship/PROFILE.json`.
 
 | Property | Answers |
 |---|---|
+| **How it's reached** | pixels through rendered UI · a terminal (argv/exit) · an import (module/types) · a network call (a wire contract) · a schedule, nobody watching · a physical system · a reader, through a document |
 | **Where value happens** | one screen · a sequence · continuous interaction · a background run · between people · a physical outcome · an answered question · consumed content |
 | **Who owns the truth** | a local component · the device runtime · local storage · an app server · an external service · a human workflow · a shared live session |
 | **How time behaves** | static · request/response · transactional · continuous · real-time · scheduled · long-running · event-driven |
@@ -33,6 +34,15 @@ properties, answered before any architecture is chosen, written to `.ship/PROFIL
 
 Two products can share a label and share no architecture — a music player and a habit
 tracker are both "personal products". The properties separate them; the label does not.
+
+**"How it's reached" is what stops a rendered-UI floor from being handed to everything.**
+Theme, viewport, and focus rings are not universal rules demoted to a checklist — they are
+what the floor means when reached through pixels, and a category error anywhere else. A CLI
+piped into `jq` and run at a keyboard has two consumers on one surface — build for both,
+that's not a contradiction to resolve. A brief that genuinely composes several surfaces at
+once (a library shipping its own CLI and docs site) is not one product with the others
+deferred — each gets its own profile, its own floor. Forcing it to one is how the CLI
+inherits a database schema meant for the docs site.
 
 ## Decide, don't dither
 
@@ -153,30 +163,66 @@ The failure path is part of the contract: *unsupported file → does NOT sit in 
 the item and the exact reason are shown → the user can remove it or pick another.* If it
 reads "show an error", it is not finished.
 
-**Evidence** — cheapest that actually proves the claim: `command_exit` · `unit_assertion` ·
-`browser_assertion` · `network_trace` · `runtime_event_trace` · `database_record` ·
-`persisted_reload` · `visual_snapshot` · `accessibility_tree` · `manual_judgement`.
+**Evidence** — cheapest that actually proves the claim, picked per the binding surface:
+`command_exit` · `unit_assertion` · `browser_assertion` · `network_trace` ·
+`runtime_event_trace` · `database_record` · `persisted_reload` · `visual_snapshot` ·
+`accessibility_tree` · `citation_verified` · `independent_reproduction` ·
+`manual_judgement`. A written-artifact deliverable that skips straight to
+`manual_judgement` has not verified its central claim, only asserted it fluently.
 
 A green test suite that never exercised the loop is not evidence the loop works.
 
 ---
 
-## The floor — every product, every shape
+## The floor — universal in concept, derived in manifestation
 
-- Boots, and the first-value loop completes end to end
-- Zero uncaught runtime errors on first paint
-- Every primary control reachable by keyboard, with a visible focus ring
-- Loading (skeleton, not spinner) · empty (with the action) · error (with retry).
-  No-results is a *different* state from nothing-yet
-- Confirm only the irreversible; prefer undo
-- The core journey works at 375px wide
-- No secrets in the repo
-- The completion state reported honestly
+Five things are true of every competent deliverable. **None of them says "UI" —** what
+satisfies each one is derived from *how it's reached*, not assumed to be a screen.
 
-**Forms** — wherever one exists
+- **It starts, and the first-value loop completes end to end.**
+  pixels → boots, zero uncaught errors on first paint · terminal → runs, exits 0 on the
+  documented success path · import → the entry point resolves and the documented example
+  executes · network call → the endpoint responds per its contract · schedule → one full
+  run completes without manual intervention · document → the conclusion is present and
+  supported
+- **It fails intelligibly, never silently and never by hanging.**
+  pixels → a rendered error state with retry · terminal → nonzero exit, a message on
+  stderr, never a stack trace as the whole answer · import → a typed error, not a thrown
+  string · network call → a meaningful status/error code · schedule → an alert, not a
+  silent skip · document → a stated limitation, not an omitted one
+- **It is discoverable without reading the source.**
+  pixels → visible controls · terminal → `--help` and `--version` · import → types and a
+  doc example that runs · network call → a published contract (OpenAPI, a schema, a spec)
+  · document → a summary before the appendix
+- **No secrets in the repo, whatever the surface.**
+- **The completion state is reported honestly** — see Phase outcomes in `ship-without-me`.
+
+**Only where the surface is pixels**, the floor also includes: every primary control
+reachable by keyboard with a visible focus ring; loading (skeleton, not spinner), empty
+(with the action), and error (with retry) as three distinct states, no-results being a
+*fourth*, different from nothing-yet; the core journey working at 375px wide; confirming
+only the irreversible, preferring undo. These are not lesser rules demoted from "universal"
+— they are exactly what discoverability and intelligible failure mean when a person is
+looking at rendered pixels, and they are a category error anywhere else. A CLI has no
+viewport to be 375px wide; asserting otherwise is not being thorough, it is not having
+derived the surface at all.
+
+**Forms** — wherever one exists, regardless of surface
 - Real `<label>` on every input · correct `type` and `autocomplete`
 - Validate on blur, never on keystroke · errors on the field, not only in a toast
 - Submit disabled while submitting · input preserved on failure · autosave past 8 fields
+
+**Terminal** — wherever the surface is a terminal
+- `--help` / `-h` and `--version` actually work · machine-readable output behind a flag
+  (`--json`) when a program might consume it · never block on an interactive prompt when
+  stdin is not a TTY · stdout carries data, stderr carries logs, never mixed
+
+**Import** — wherever the surface is a module others import
+- Standalone type-check passes against the built output, not just the source
+- `npm pack --dry-run` (or the ecosystem equivalent) contains no test files, no source
+  maps that leak paths, and matches the declared entry points
+- At least one documented usage example actually executes against the built package
+- Public API changes follow semver; peer dependencies are declared, not bundled
 
 ## Conditional packs — each gated on a profile property
 
@@ -189,11 +235,16 @@ clients — is normal. Write its contract and its check yourself under `.ship/ga
 the same discipline. **Never route a capability to the nearest pack that happens to exist**;
 that is how continuous playback becomes a table of records that never make a sound.
 
-**Public acquisition** — *distribution is public*
+**Public acquisition** — *distribution is public AND the surface is pixels*
 - Real `<title>`, meta description, canonical, favicon — not a framework default
 - `og:image`, absolute URL, 1200×630 — otherwise every shared link is a blank card
 - At least one `<h1>` in the HTML **before JS runs**
 - `robots.txt` without `Disallow: /`, a branded 404
+
+A publicly distributed CLI or library is still public — an npm registry page and a README
+are its discovery surface — but it earns none of the above. It earns the **Import** or
+**Terminal** floor instead. "Public" answers *how far it travels*; the surface answers
+*what proves it's ready*. Conflating them is how a library gets a landing page.
 
 **Legal** — *personal data is collected, or the product is public*
 - `/privacy` and `/terms`, dated, linked in the footer and at signup

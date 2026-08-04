@@ -17,6 +17,13 @@ const IDENTITY_RANK = ['none', 'local profile', 'one authenticated user', 'share
 // A gate is a claim about the situation. Anything it cannot express is deliberately NOT
 // forced through the closest expressible gate — it comes back as a gap instead.
 function satisfies(gate, p) {
+  // A gate joined with && requires every part — used where "public" alone overselects.
+  // A publicly distributed CLI or library is still public (an npm page is its discovery
+  // surface) but earns none of the pixel-bound acquisition packs; only "public AND reached
+  // through pixels" does. Everywhere else, applies_when stays OR across the array, which is
+  // what the legal pack's "personal data collected, or public" genuinely means.
+  if (gate.includes('&&')) return gate.split('&&').every(g => satisfies(g.trim(), p))
+
   const [lhs, rhs] = gate.split(/(?:>=|!=|=)/).map(s => s.trim())
   const op = gate.includes('>=') ? '>=' : gate.includes('!=') ? '!=' : '='
   const caps = (p.core_capabilities ?? []).map(c => c.toLowerCase())
@@ -33,6 +40,11 @@ function satisfies(gate, p) {
       o.toLowerCase().includes(rhs.toLowerCase()) ||
       (rhs === 'device runtime' && RUNTIME.test(o)))
   }
+  // consumed_via is prose too ("a terminal, through argv/exit"), and the gate is written
+  // against the short form ("a terminal"). Same reasoning as state_owner: match the
+  // substring rather than demand exact equality, or a well-formed profile silently fails
+  // to route.
+  if (lhs === 'consumed_via') return (p.consumed_via ?? '').toLowerCase().includes(rhs.toLowerCase())
   if (lhs === 'destinations>1') return false
   if (lhs === 'deployed') return String(p.deployed ?? false) === rhs
   if (lhs === 'collects_personal_data') return String(p.collects_personal_data ?? false) === rhs
@@ -66,8 +78,39 @@ export function plan(profile) {
 
 const CASES = [
   {
+    name: 'local CLI tool',
+    profile: {
+      consumed_via: 'a terminal, through argv/exit',
+      first_value_event: 'A user runs the command and gets the transformed output or a clear error',
+      value_location: 'one screen', state_owners: ['local component'],
+      time_model: 'request/response', content_source: 'user-owned import',
+      identity_model: 'none', persistence_model: 'none', distribution: 'public',
+      core_capabilities: ['argument parsing', 'stdout output'],
+    },
+    must: ['cli-surface'],
+    must_not: ['landing-composition', 'ship-ready-audit', 'tenant-auth-demo', 'database-schema',
+               'library-surface', 'app-shell-composition', 'account-lifecycle', 'legal-and-consent'],
+  },
+  {
+    name: 'published library',
+    profile: {
+      consumed_via: 'an import, through a module',
+      first_value_event: 'A consuming project imports the package and the documented example runs',
+      value_location: 'one screen', state_owners: ['local component'],
+      time_model: 'static', content_source: 'user-created',
+      identity_model: 'none', persistence_model: 'none', distribution: 'public',
+      core_capabilities: ['typed API surface'],
+    },
+    must: ['library-surface'],
+    must_not: ['landing-composition', 'ship-ready-audit', 'cli-surface', 'tenant-auth-demo',
+               'database-schema', 'app-shell-composition', 'account-lifecycle', 'legal-and-consent',
+               'onboarding-first-run'],
+  },
+
+  {
     name: 'local music player',
     profile: {
+      consumed_via: 'pixels, through rendered UI',
       first_value_event: 'A user selects a track and hears it play',
       value_location: 'continuous interaction',
       state_owners: ['browser media engine', 'local persistent storage'],
@@ -82,6 +125,7 @@ const CASES = [
   {
     name: 'restaurant menu catalogue',
     profile: {
+      consumed_via: 'pixels, through rendered UI',
       first_value_event: 'A diner opens a dish and sees its recipe',
       value_location: 'consumed content', state_owners: ['app server'],
       time_model: 'request/response', content_source: 'open dataset',
@@ -95,6 +139,7 @@ const CASES = [
   {
     name: 'multi-tenant repair shop ops',
     profile: {
+      consumed_via: 'pixels, through rendered UI',
       first_value_event: 'An advisor moves a job to Ready and the board updates',
       value_location: 'operational records', state_owners: ['app server'],
       time_model: 'transactional', content_source: 'user-created',
@@ -109,6 +154,7 @@ const CASES = [
   {
     name: 'offline notes, single device',
     profile: {
+      consumed_via: 'pixels, through rendered UI',
       first_value_event: 'A note survives closing and reopening the app',
       value_location: 'one screen', state_owners: ['local persistent storage'],
       time_model: 'static', content_source: 'user-created',

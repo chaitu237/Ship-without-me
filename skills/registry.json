@@ -37,6 +37,16 @@
       ],
       "has_eval": false
     },
+    "cli-surface": {
+      "description": "Use when building a command-line tool, or any deliverable reached through argv/stdin/ stdout/exit code rather than a browser. Use when a build with a `bin` field is about to get a theme, a viewport, or a login screen.",
+      "applies_when": [
+        "consumed_via=a terminal"
+      ],
+      "provides": [
+        "cli conventions"
+      ],
+      "has_eval": false
+    },
     "continuous-media": {
       "description": "Use whenever audio or video plays, records, or streams — players, podcasts, voice notes, video lessons, calls. Use when there is a queue, a progress bar, a seek control, or playback that must survive navigation.",
       "applies_when": [
@@ -162,7 +172,7 @@
     "landing-composition": {
       "description": "Use when building or fixing a public landing page, when visitors arrive and do not sign up, or when the page reads as generic.",
       "applies_when": [
-        "distribution=public"
+        "distribution=public&&consumed_via=pixels"
       ],
       "provides": [
         "acquisition surface"
@@ -177,11 +187,21 @@
     "legal-and-consent": {
       "description": "Use before a public launch, before connecting a payment provider, before app-store submission, or when data-protection obligations come up.",
       "applies_when": [
-        "distribution=public",
+        "distribution=public&&consumed_via=pixels",
         "collects_personal_data=true"
       ],
       "provides": [
         "consent record"
+      ],
+      "has_eval": false
+    },
+    "library-surface": {
+      "description": "Use when building a library, SDK, or package published for other code to import — no application, no UI, no deployment. Use when a build with no `bin` field and no server is about to get a theme, a landing page, or a database.",
+      "applies_when": [
+        "consumed_via=an import"
+      ],
+      "provides": [
+        "library conventions"
       ],
       "has_eval": false
     },
@@ -198,7 +218,7 @@
     "onboarding-first-run": {
       "description": "Use when designing what happens immediately after signup, or when users sign up and do not come back.",
       "applies_when": [
-        "content_source=user-created"
+        "content_source=user-created&&consumed_via=pixels"
       ],
       "provides": [
         "first run"
@@ -253,7 +273,7 @@
     "ship-ready-audit": {
       "description": "Use before sharing or launching anything publicly, when a shared link renders as a blank card, or when a site is invisible to search engines.",
       "applies_when": [
-        "distribution=public"
+        "distribution=public&&consumed_via=pixels"
       ],
       "provides": [
         "launch surface"

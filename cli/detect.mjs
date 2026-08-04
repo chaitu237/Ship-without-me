@@ -73,6 +73,7 @@ const PLACEHOLDER = /^(changeme|xxx+|your[-_]?\w+[-_]?here|todo|replace[-_]?me|<
 // Which surfaces this repo actually has. Drives the coverage report, so a group with no
 // surface is reported as unexamined rather than counted as a pass.
 const SURFACES = new Set()
+let cliBinPaths = []
 
 function detectSurfaces(files, rel) {
   const has = re => files.some(f => re.test(rel(f)))
@@ -96,6 +97,22 @@ function detectSurfaces(files, rel) {
     SURFACES.add('auth-surface')
   if (bodyHas(['.js', '.ts', '.mjs', '.py', '.go', '.rb'], /\b(app|router)\.(get|post|put|patch|delete)\s*\(|@(app|router)\.(route|get|post)|http\.HandleFunc/))
     SURFACES.add('http-handlers')
+
+  // A CLI and a library are both reached through package.json fields, not through anything
+  // rendered — the same reason `client-code` requires a real component signal, these two
+  // require a real entry-point signal, or every Node project would trivially claim both.
+  const pkgFile = files.find(f => rel(f) === 'package.json')
+  if (pkgFile) {
+    try {
+      const pkg = JSON.parse(read(pkgFile) || '{}')
+      if (pkg.bin) {
+        SURFACES.add('cli-entry')
+        cliBinPaths = typeof pkg.bin === 'string' ? [pkg.bin] : Object.values(pkg.bin)
+      }
+      if (!pkg.bin && (pkg.main || pkg.module || pkg.exports) && !SURFACES.has('served-html'))
+        SURFACES.add('library-entry')
+    } catch {}
+  }
 }
 
 function repoRules() {
@@ -104,6 +121,30 @@ function repoRules() {
   if (!files.length) return
   const rel = p => relative(ROOT, p)
   detectSurfaces(files, rel)
+
+  // CLI: --help/-h is the tool's own discovery surface. Absence is a plain, low-noise
+  // check — the same shape as no-favicon — not a heuristic about what the tool actually does.
+  if (SURFACES.has('cli-entry')) {
+    const entryFiles = cliBinPaths
+      .map(p => files.find(f => rel(f).replace(/^\.\//, '') === p.replace(/^\.\//, '')))
+      .filter(Boolean)
+    const hasHelp = entryFiles.some(f => /--help|-h\b|\.help\(|showHelp/.test(read(f) || ''))
+    if (entryFiles.length && !hasHelp)
+      add('cli-no-help', 'warn', 'bin entry has no --help/-h handling found', rel(entryFiles[0]))
+  }
+
+  // Library: a shipped .d.ts is what gives a consumer real types instead of `any`. Checked
+  // only when there is TypeScript source to type — a plain-JS library is not missing
+  // anything by having no types field.
+  if (SURFACES.has('library-entry')) {
+    const pkgFile = files.find(f => rel(f) === 'package.json')
+    const pkg = pkgFile ? JSON.parse(read(pkgFile) || '{}') : {}
+    const hasTsSource = files.some(f => /\.ts$/.test(extname(f)) && !rel(f).includes('.d.ts'))
+    const hasTypesField = pkg.types || pkg.typings ||
+      (pkg.exports && JSON.stringify(pkg.exports).includes('"types"'))
+    if (hasTsSource && !hasTypesField)
+      add('library-no-types', 'warn', 'TypeScript source present but no "types"/"typings" field or exports.types', 'package.json')
+  }
 
   for (const f of files) {
     const ext = extname(f)
@@ -431,6 +472,8 @@ const RULE_GROUPS = {
   api: ['unversioned-api', 'tenant-from-request', 'token-in-query', 'cors-wildcard-credentials',
     'unpaginated-list'],
   list: ['unpaginated-list', 'no-empty-state'],
+  cli: ['cli-no-help'],
+  library: ['library-no-types'],
 }
 RULE_GROUPS.all = [...new Set(Object.values(RULE_GROUPS).flat())]
 
@@ -470,6 +513,8 @@ needs('auth-surface',  ['no-password-reset', 'no-change-password', 'no-email-ver
   'no-account-deletion', 'no-data-export'])
 needs('http-handlers', ['unversioned-api', 'tenant-from-request', 'token-in-query',
   'cors-wildcard-credentials', 'unpaginated-list'])
+needs('cli-entry',     ['cli-no-help'])
+needs('library-entry', ['library-no-types'])
 
 const SURFACE_LABEL = {
   'served-html':   'no served HTML (pass --url, or this has no web surface)',
@@ -479,6 +524,8 @@ const SURFACE_LABEL = {
   'form-markup':   'no form markup found',
   'auth-surface':  'no login or account surface found',
   'http-handlers': 'no HTTP route handlers found',
+  'cli-entry':     'no package.json "bin" field — this has no CLI surface',
+  'library-entry': 'no package.json "main"/"module"/"exports" with no "bin" — no library surface',
 }
 
 function autoUrl() {

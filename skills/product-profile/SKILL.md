@@ -16,7 +16,7 @@ on them is how a product gets built like the nearest thing you have seen instead
 itself. A music player and a habit tracker are both "personal products" and share almost no
 technical requirement. The properties separate them; the label does not.
 
-## Derive it — six properties
+## Derive it — seven properties
 
 ```
 Where does value happen?
@@ -72,6 +72,43 @@ What observable loop proves it works?
                                           → write it with core-interaction-contract
 ```
 
+```
+How is it reached — its binding surface?
+├─ pixels, through rendered UI ────► a person, mediated by rendering. Theme, layout,
+│                                    accessibility tree, viewport all apply here —
+│                                    and ONLY here.
+├─ a terminal, through argv/exit ──► a person or another program, mediated by a process
+│                                    boundary. Floor: exit codes, --help, --json for the
+│                                    program case, no blocking prompt on a non-TTY pipe.
+├─ an import, through a module ────► another program, mediated by types and exports.
+│                                    Floor: standalone type-check, semver, a doc example
+│                                    that actually executes, no test files in the tarball.
+├─ a network call, through a wire ─► another program, via a versioned contract. Floor:
+│                                    schema stability, meaningful error codes, not a screenshot.
+├─ a schedule, nobody watching ────► mediated by logs and alerts, never a request-response.
+│                                    Floor: idempotent replay, checksum parity across two
+│                                    runs of the same input, drift alerting.
+├─ a physical system ──────────────► actuation or a sensor signal. Floor: calibration,
+│                                    a real-world measurement, defined failure behaviour
+│                                    when the physical world disagrees with the model.
+└─ a reader, through a document ───► a person, mediated by claims and citations, no
+                                     runtime at all. Floor: every load-bearing claim
+                                     traces to a source; at least one number is
+                                     independently recomputed, not merely restated.
+```
+
+**This stops a rendered-UI floor from being applied to a CLI, a library, or a report.**
+"Theme," "375px wide," "focus ring" are not universal rules demoted to a checklist — they
+are what the floor *means* when the surface is pixels, and a category error anywhere else.
+The floor itself — boots, fails intelligibly, is discoverable, honestly reported — is
+universal; its manifestation is derived here and in `core-interaction-contract`.
+
+One surface can serve two consumers at once, and that is the requirement, not a conflict to
+resolve — a CLI piped into `jq` is read by a program, run interactively it's read by a
+person, which is why it needs both plain and `--json` output. A build can also genuinely
+*have* more than one binding surface — see **Composed deliverables** below, which exists so
+that case doesn't collapse to whichever surface got derived first.
+
 ## Write it down
 
 `.ship/PROFILE.json`, validated against `schemas/profile.schema.json`. **`core_capabilities`
@@ -112,6 +149,27 @@ nearest branch won.
 If the gap is essential and cannot be closed, the outcome is `blocked: capability` — name
 the capability and what was tried.
 
+## Composed deliverables — when one build genuinely has several binding surfaces
+
+Do not force a library-plus-CLI-plus-docs-site brief into one profile. That is not one
+product wearing three hats; it is three deliverables shipped together, and each needs its
+own first-value contract, its own floor, and its own evidence:
+
+```
+one brief, several binding surfaces
+  ├─ library  (import)    → its own PROFILE, its own floor: types, semver, doc example runs
+  ├─ CLI      (terminal)  → its own PROFILE, its own floor: exit codes, --help, --json
+  └─ docs site (pixels)   → its own PROFILE, its own floor: the web floor below, in full
+```
+
+Write `.ship/PROFILE.json` as a **list** when this is genuinely the case, one entry per
+binding surface, each with its own `core_capabilities`. Verify each independently — a
+passing docs-site build says nothing about whether the library it documents type-checks.
+
+Not the same move as logging a shape as "Not now" — that is phasing, for a shape deferred
+to a later brief. This is for parts shipping *in the same run*; collapsing them is how a CLI
+silently inherits a database schema, or a library a landing page.
+
 ## Micro-details, each preventing a specific failure
 
 - **Derive the profile before the plan, not after.** Afterwards you will write a profile
@@ -123,8 +181,20 @@ the capability and what was tried.
   wearing full-looking content. Descriptive is enough only when the value is descriptive.
 - **Identity `none` is a real answer and usually the right one.** Most single-device tools
   need no accounts at all.
-- **Record connectivity and criticality too.** Offline-capable changes the storage story;
-  irreversible changes the verification bar from "usually works" to "always works".
+- **`criticality: irreversible` is not decoration — it overrides defaulting.** It is what
+  distinguishes an unresolved *preference* (default it, log it, keep moving) from an
+  unresolved *fork whose effect leaves the repo's control* (infrastructure state, a live
+  payment, a physical actuation, data sent somewhere the run cannot undo). The second kind
+  gets a stop receipt or an explicit policy gate every time, regardless of how small the
+  change looks — "one resource," "one row," "one message" is not the same question as
+  "reversible in minutes" once the effect is outside version control. See the orchestrator's
+  contract for where this is actually enforced.
+- **A worked convention is not the same thing as a derived one, and both are needed.** This
+  property tells you a CLI needs `--help` and exit codes; it does not tell you what the
+  conventional flag names or help-text format are. Domain convention — the accent-hue
+  table, the landing-page skeleton, a CLI's own conventions — still has to be looked up or
+  known, the same way it always did. The property picks which conventions apply; it does
+  not replace them.
 - **A capability named after the domain hides the requirement.** "Music" tells you nothing;
   "audio playback, queue persistence, file import" tells you three skills and three checks.
 
@@ -152,6 +222,11 @@ Judgement:
 | Checks all pass, core capability absent | Capability never named, so nothing selected it or tested it |
 | The profile matches the plan suspiciously well | Written after the architecture was chosen |
 | An unlisted capability silently became a CRUD screen | Gap protocol skipped in favour of the nearest available skill |
+| A CLI or library was scaffolded with Vite, Tailwind, and a theme | Binding surface never derived; the web floor applied by default |
+| `ship detect` passed on a library with no types, no tests, no README | Rules fired only for pixel-bound surfaces; nothing checked the actual deliverable |
+| An infrastructure change was defaulted-and-logged like a CSS token | `criticality` recorded but never checked before defaulting |
+| A library-plus-CLI-plus-docs brief shipped only the docs site | Composed deliverables flattened into one profile; the others logged as "Not now" |
+| A report's central number was never independently recomputed | Evidence collapsed to `manual_judgement` for a written-artifact deliverable |
 
 ## Don't
 

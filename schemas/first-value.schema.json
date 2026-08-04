@@ -4,34 +4,88 @@
   "title": "First-value contract",
   "description": "The observable loop that proves a product works, and the evidence for each step. Written with core-interaction-contract before architecture is chosen.",
   "type": "object",
-  "required": ["first_value_event", "successful_path", "state_owners", "failure_path", "recovery_path", "evidence"],
+  "required": [
+    "first_value_event",
+    "successful_path",
+    "state_owners",
+    "failure_path",
+    "recovery_path",
+    "evidence"
+  ],
   "additionalProperties": true,
   "properties": {
-    "first_value_event": { "type": "string", "minLength": 12 },
-    "starting_state": { "type": "string" },
+    "first_value_event": {
+      "type": "string",
+      "minLength": 12
+    },
+    "starting_state": {
+      "type": "string"
+    },
     "successful_path": {
-      "type": "array", "minItems": 2, "items": { "type": "string" },
-      "description": "Observable steps someone could watch, in order. Not a feature list — a feature cannot be observed failing."
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string"
+      },
+      "description": "Observable steps someone could watch, in order. Not a feature list \u2014 a feature cannot be observed failing."
     },
     "state_owners": {
-      "type": "object", "additionalProperties": { "type": "string" },
-      "description": "step → the system authoritative at that step"
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "step \u2192 the system authoritative at that step"
     },
-    "failure_path": { "type": "string", "description": "The likeliest failure that prevents value. Not 'an error occurs'." },
-    "recovery_path": { "type": "string", "description": "How the user recovers without starting over." },
-    "non_goals": { "type": "array", "items": { "type": "string" } },
+    "failure_path": {
+      "type": "string",
+      "description": "The likeliest failure that prevents value. Not 'an error occurs'."
+    },
+    "recovery_path": {
+      "type": "string",
+      "description": "How the user recovers without starting over."
+    },
+    "non_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "evidence": {
-      "type": "array", "minItems": 1,
+      "type": "array",
+      "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["type", "claim"],
+        "required": [
+          "type",
+          "claim"
+        ],
         "properties": {
-          "type": { "enum": ["command_exit","unit_assertion","browser_assertion","network_trace","runtime_event_trace","database_record","persisted_reload","visual_snapshot","accessibility_tree","manual_judgement"] },
-          "claim": { "type": "string", "minLength": 8 },
-          "step": { "type": "string" }
+          "type": {
+            "enum": [
+              "command_exit",
+              "unit_assertion",
+              "browser_assertion",
+              "network_trace",
+              "runtime_event_trace",
+              "database_record",
+              "persisted_reload",
+              "visual_snapshot",
+              "accessibility_tree",
+              "manual_judgement",
+              "citation_verified",
+              "independent_reproduction"
+            ]
+          },
+          "claim": {
+            "type": "string",
+            "minLength": 8
+          },
+          "step": {
+            "type": "string"
+          }
         }
       },
-      "description": "A passing suite that never exercised the loop is not evidence the loop works."
+      "description": "A passing suite that never exercised the loop is not evidence the loop works. citation_verified and independent_reproduction exist for written-artifact deliverables (reports, plans, analyses) \u2014 without them that evidence collapses into manual_judgement, which is the exact 'looks considered, never checked' failure this schema exists to prevent."
     }
   }
 }
