@@ -115,6 +115,33 @@ Full methodology: [`docs/evaluation.md`](../docs/evaluation.md).
 Long enough to derive, short enough to hold. Roughly 100–200 lines. If it is longer, it is
 probably two skills, or it has grown a catalogue.
 
+### When you split one skill out of another, the pointer must be unusable on its own
+
+Splitting is the right fix for an over-long skill. It fails in a specific way: the author,
+wanting the pointer to be helpful, summarises what moved — and the summary is *just* enough
+for a reader to proceed without loading the reference at all. The split then costs the
+original its length and buys nothing, because the detail it was protecting still goes unread.
+
+A pointer must say **what the reference holds** and **what breaks if it is skipped**, and
+must carry no detail a reader could act on instead:
+
+```text
+✗  Invoke `product-profile`. It derives seven properties — where value happens, who owns
+   the truth, how time behaves, where content comes from, the identity boundary, how it's
+   reached, and what proves it works.
+        ← every property named. A reader now "knows" the step and will not open the file,
+          so the derivation, the gap protocol, and the symptom table all go unread.
+
+✓  Load `product-profile` and follow it. It holds the seven properties and the derivation
+   for each. If you did not load it, you cannot do this step — the properties are not
+   guessable from this heading, and a wrong one routes silently.
+        ← names the shape and the consequence, supplies nothing to improvise from.
+```
+
+The test: **could a reader who never opens the reference produce a plausible-looking
+result?** If yes, the pointer is leaking the content it replaced. Plausible-looking and
+wrong is the expensive outcome — it survives review precisely because it looks considered.
+
 ## The description is the only part on the hot path
 
 Skill **bodies load on demand**. The `description:` line does not — every description in

@@ -222,13 +222,17 @@ allowed to branch on. Derive the properties.
 
 ### 0b-ii. Derive the product profile — this is what selects the build
 
-Invoke **`product-profile`**. It derives seven properties of this situation — including
-**how the deliverable is reached** (pixels, a terminal, an import, a network call, a
-schedule, a physical system, a written document), which is what stops a rendered-UI floor
-from being applied to a CLI or a library. It writes `.ship/PROFILE.json` — a list, one entry
-per binding surface, if the brief genuinely composes several deliverables in this run — and
-resolves the capability map, including the capabilities nothing here covers, which become
-gaps rather than improvisations.
+**Load `product-profile` and follow it.** It holds the seven properties, the derivation for
+each, the capability-map resolution, and the gap protocol. Do not reconstruct them from
+memory — an approximate profile is worse than none, because everything downstream is gated
+on it and a plausible wrong answer routes silently.
+
+**If you did not load it, you cannot do this step.** The properties are not guessable from
+this heading: getting one wrong hands a CLI a rendered-UI floor, or hands a music player a
+database, and nothing later in this protocol will catch it — Phase 4 verifies what the
+profile *claimed*, so a wrong profile verifies clean.
+
+Output: `.ship/PROFILE.json`, and the capability map with any gaps named.
 
 The output drives Phase 2's skill graph and Phase 4's verification packs. Do not proceed
 past it with an essential capability unowned.
@@ -562,8 +566,23 @@ pack is a decision, and an unexplained skip is indistinguishable from an oversig
 ```markdown
 ## D-004 · Accent hue: blue #2563EB
 Choice made because: trust vertical (clinical/finance/security) → blue.
-Confidence: high · Reversible: yes, one token
+Confidence: derived · Reversible: yes, one token
 ```
+
+**Confidence is one of four words, each with a test you can actually apply.** "High" and
+"medium" invite a vibe, and a vibe cannot be checked by a reader or re-examined by the
+red-team pass:
+
+| Word | The test that earns it |
+|---|---|
+| `derived` | Follows from a property in `PROFILE.json` or a rule in a loaded skill. Someone else with the same profile reaches the same choice. |
+| `evidenced` | Follows from something read this run — a file in the repo, a fetched source, a command's output. Name it. |
+| `defaulted` | No signal either way; took the documented default. Correct and unremarkable — most entries are this. |
+| `assumed` | Needed a fact nobody supplied and none was found. **Goes in the report's assumptions list**, and the red-team pass starts here. |
+
+`assumed` is the load-bearing one. A run that logs everything as high confidence has not
+recorded which decisions are actually load-bearing guesses, so nothing downstream knows
+where to look first — which is the entire purpose of writing decisions down.
 
 ### Check the decision set before you build on it
 
@@ -656,93 +675,17 @@ exist yet, or you will design the API around the screen and get the data model w
 whose truth lives in the device runtime goes foundation → runtime ownership → the loop.
 Inserting a schema phase there invents a database to hold state something else already owns.
 
-### Every phase runs three roles, in this order
+### How each phase is executed and reviewed
 
-One agent building unsupervised produces code that looks right. Three roles catch what
-one cannot see about itself.
+**Load `phase-execution` and follow it.** It holds the three roles and their fixed order,
+the independence rule that decides whether a review counts as evidence, the phase-outcome
+vocabulary the controller dispatches on, model tiering, and the idempotency check before any
+re-run.
 
-```
-┌─ BUILDER ─────────────────────────────────────────────────────┐
-│  Fresh context. Gets the phase spec IN FULL — never a pointer  │
-│  to a file it must go read. Loads the named skill, implements, │
-│  writes its own check, runs it, self-reviews, commits.         │
-│  Returns a phase outcome (below).                             │
-└───────────────────────────┬───────────────────────────────────┘
-                            ▼
-┌─ SCOPE REVIEW ────────────────────────────────────────────────┐
-│  "Is this what the phase asked for — and nothing else?"        │
-│  Fails in BOTH directions: a missing requirement, and a        │
-│  feature nobody asked for. Extra scope is a defect, not a      │
-│  bonus — it costs maintenance forever and was never budgeted.  │
-└───────────────────────────┬───────────────────────────────────┘
-                            ▼ only once scope review passes
-┌─ QUALITY REVIEW ──────────────────────────────────────────────┐
-│  "Is it well built?" Runs `ship detect` for the phase's rule   │
-│  group, then judges what no rule can see.                      │
-└───────────────────────────┬───────────────────────────────────┘
-                            ▼
-                   phase complete → commit
-```
-
-**The order is not negotiable.** Judging how well something is built, before knowing
-whether it is the right thing, means polishing an implementation you are about to throw
-away. If scope review fails, the **same builder** fixes it and scope review runs **again** —
-not once, but until it passes.
-
-**Never run two builders in parallel.** They will collide on the same files. Reviews may
-overlap with the *next* phase's builder; builders may not overlap with each other.
-
-### Phase outcomes — every one names what the controller must change
-
-A builder that returns "it didn't work" tells you nothing actionable. Every outcome below
-is defined by **what has to change before anything is re-dispatched**, which is the only
-question the controller actually has.
-
-| Outcome | Meaning | What must change |
-|---|---|---|
-| `done` | finished, self-checked, committed | nothing — proceed to scope review |
-| `done, gaps logged` | finished, with something knowingly incomplete | read the gaps. Correctness or scope → resolve now. An observation → log to `DECISIONS.md` and proceed |
-| `blocked: policy` | hit a `policy.json` hard stop | **nothing.** This is correct behaviour. Log it, wire the path, leave it off, report it |
-| `blocked: context` | information the controller never supplied | supply it, re-dispatch on the same model |
-| `blocked: capability` | the task exceeds what this model can do | escalate the model tier, **or** split the phase — not both at once, or you learn nothing |
-| `blocked: plan` | the phase spec itself is wrong or contradictory | fix `DECISIONS.md`. Do not ask the builder to work around a bad plan |
-
-`blocked: policy` is the outcome that only exists because this skill runs unattended. It is
-a **success**, not a failure — the hard stop did its job. Treating it as an error is how an
-autonomous run talks itself into spending money.
-
-**Never re-dispatch an identical prompt to an identical model.** If it was stuck once it
-will be stuck again, and you have spent a phase's budget to learn nothing. Every
-re-dispatch changes exactly one variable — the context, the model, or the scope — so that
-when it succeeds you know which change did it.
-
-### Match the model to the phase
-
-Cost and latency are budgets like any other. Spend capability where judgement is required
-and nowhere else.
-
-| Phase shape | Model tier |
-|---|---|
-| Mechanical, one or two files, complete spec (tokens, metadata, legal routes) | cheapest that can do it |
-| Integration across files, pattern-matching to existing code | standard |
-| Schema design, API contract, architecture, **and every reviewer role** | most capable available |
-
-Reviewers get the best model available. A cheap reviewer approves things a cheap builder
-wrote, which is worse than no review because it produces a signed-off failure.
-
-### Give builders text, not file paths
-
-The controller extracted the phase spec already. **Pass it in full.** A builder that has
-to open and read `ROADMAP.md` spends its context on discovery instead of work, and may
-read the wrong section.
-
-Include the scene: where this phase sits, what came before, what depends on it. A builder
-that does not know why it is doing something builds the letter and misses the point.
-
-Activate `regional-commerce-stack` when the brief names a specific country or market.
-Activate `field-ops-mobile` when the primary user works away from a desk.
-
-**Commit after each.**
+**Skipping it does not degrade gracefully.** Its failures are the silent kind: a review that
+always passes because it ran in the context that produced the work, a free-text outcome the
+controller cannot act on, a re-dispatched phase that seeds its data twice. None of these
+surface as errors — they surface as a run that looks complete and is not.
 
 ## Phase 4 — Verify
 
@@ -756,39 +699,25 @@ known gap and continue.** Do not halt forever. Do not silently drop a failing ch
 
 ### Re-running a phase must be safe
 
-A re-opened or resumed phase **re-runs from the start of that phase**, not from where it
-stopped. Every external side effect therefore happens twice unless it is idempotent.
-This is what turns one retry into two deploys, two domain purchases, or two migrations.
+Covered by `phase-execution`, already loaded in Phase 3. A resumed phase re-runs from the
+start of that phase, so every external side effect happens twice unless it was keyed —
+which is how one retry becomes two deploys or two migrations.
 
-```
-Before any side effect, ask: has this exact effect already happened in this run?
-├─ record the intent in STATE.md BEFORE performing it, under a stable key
-├─ on phase entry, check the key — if present, skip it and move on
-└─ derive the key from the phase name and its inputs, never from a timestamp
-   or a random value, so a retry produces the SAME key
-```
+Non-negotiable exits — **the floor for this profile's binding surface, plus every
+conditional pack the profile turned on.** See `AGENTS.md`. The floor is universal; what
+satisfies it is not, and asserting the pixel version of it against a CLI or a library is
+not thoroughness, it is a profile that was never derived.
 
-Per phase:
+Where the surface is pixels, that means: a real `<title>`, meta description, canonical and
+favicon rather than framework defaults; an absolute `og:image` so the share link is not a
+blank card; at least one `<h1>` in the served HTML before JS runs; something rendered with
+JS disabled; zero console errors on first paint. Plus `/privacy` and `/terms` returning 200
+where the legal pack applies, and tenant-A rows invisible to a tenant-B session where
+tenancy does.
 
-- **Migrations** — additive and named. Re-running the same name is a no-op, never a
-  second `ALTER`.
-- **Deploys** — check for an existing deployment of the current commit before creating one.
-- **Generated files** — write to a temp path, then move into place, so a half-written
-  file from a killed phase is never mistaken for a finished one.
-- **Anything behind `policy.json`** — already blocked, therefore already safe.
-
-**Commit at the end of a phase, never during it.** A mid-phase commit makes the phase
-look complete to a resume, which then skips the work that had not happened yet.
-
-Non-negotiable exits — the run is not done until all of these pass:
-
-- Real `<title>`, meta description, canonical, favicon. Not a framework default.
-- `og:image` present and absolute. The share link must not be a blank card.
-- At least one `<h1>` in the served HTML, before JS runs.
-- `/privacy` and `/terms` exist and return 200.
-- A tenant-A row is invisible to a tenant-B session, on every table.
-- The app renders something with JS disabled.
-- Zero console errors on first paint.
+Where it is a terminal, an import, a schedule, or a document, the exits are that surface's
+floor instead — and a run that reports the pixel list as passed on a CLI has verified
+nothing it needed to.
 
 ### Re-read the failure condition
 

@@ -20,6 +20,7 @@ const check = process.argv.includes('--check')
 const GATES = {
   'product-profile':           { core: true },
   'core-interaction-contract': { core: true },
+  'phase-execution':           { core: true },
   'design-system-commit':      { core: true },
   'layout-patterns':           { core: true },
   'frontend-architecture':     { core: true },
