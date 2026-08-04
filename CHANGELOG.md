@@ -12,6 +12,60 @@ All notable changes to this project are documented here. Format follows
   self-tested against fixtures; the `/ship-with-me` interview and the wave pipeline are not
   yet exercised. Treat `0.1.0` as pre-release until they are.
 
+## [0.4.0]
+
+### Changed — only three skills are core
+
+An end-to-end CLI build refused `design-system-commit` by name — *"binding surface is
+terminal, not pixels"* — and it was right where the registry was wrong. That skill, plus
+`layout-patterns`, `frontend-architecture` and `states-and-feedback`, were all marked core,
+so every product got design tokens and a layout archetype including tools with no viewport.
+They are gated on `consumed_via=pixels` now. A CLI resolves to 5 skills and correctly avoids
+12; a library to 4 and avoids 13.
+
+### Added
+
+- `cli-surface` and `library-surface` — conventions a property alone cannot derive: exit
+  codes, `--help`, `--json`, stdout/stderr separation; standalone type-check, `npm pack`
+  hygiene, a README example that actually executes.
+- `phase-execution` — three roles, the independence rule, outcome vocabulary, idempotency.
+  Both orchestrators load it; `ship-with-me` previously had no review protocol at all.
+- Decision provenance in `ship-with-me` (`settled` / `directed` / `derived`) so a later
+  phase cannot silently re-open a choice the user already made.
+- Confidence anchored to tests that earn it — `derived`, `evidenced`, `defaulted`,
+  `assumed` — replacing a free-text "high" no reader could check.
+
+### Fixed
+
+- The unconditional pixel floor, removed from `AGENTS.md` in 0.3.0, found again in
+  `ship-without-me`'s Phase 4 exits and again in `ship-with-me`'s.
+- Load-stub discipline: splitting a skill out left a pointer naming everything it held, so
+  the reference went unread and the split bought nothing. Enforced in `AUTHORING.md`.
+
+## [0.3.0]
+
+### Added — the deliverable is not always a rendered application
+
+- `product-profile` gains `consumed_via`, the binding surface a deliverable is reached
+  through: pixels, a terminal, an import, a network call, a schedule, a physical system, a
+  written document. The floor stays universal; its manifestation is derived from this.
+- Composed deliverables: a brief shipping a library, a CLI and a docs site together gets a
+  profile and a floor per surface, rather than the others logged as "Not now".
+- `infra_mutation` and `physical_action` in `policy.json`. `criticality` now gates the stop
+  receipt ahead of the size heuristic — an irreversible action was previously eligible for
+  the same defaulting tuned for a CSS token.
+- Two evidence types for written artifacts: `citation_verified`, `independent_reproduction`.
+
+### Fixed
+
+- `ship detect` reported a pass on ground it never examined. On a library with no README,
+  no types and no tests it printed one irrelevant React warning and exited 0. It now infers
+  which surfaces exist, suppresses rules whose surface is absent, and prints what it could
+  not check. Gating is per rule, not per group — gating by group had silenced a real secret
+  finding on a CLI.
+- `landing-composition`, `ship-ready-audit` and `legal-and-consent` were gated on
+  `distribution=public` alone, which a publicly distributed CLI also satisfies.
+
 ## [0.2.0]
 
 Architecture is now derived from properties of the product instead of applied from a
