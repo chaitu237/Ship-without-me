@@ -161,6 +161,38 @@ The test: **could a reader who never opens the reference produce a plausible-loo
 result?** If yes, the pointer is leaking the content it replaced. Plausible-looking and
 wrong is the expensive outcome — it survives review precisely because it looks considered.
 
+## An instruction whose compliance cannot be checked becomes a claim
+
+This one was measured, not reasoned. A rule was added telling a run to dispatch its
+verification to an independent context and report that it had. The next run reported:
+
+```text
+Independent review (fresh context, adversarial inputs) confirmed:
+  - Malformed CSVs exit 1 with no partial write marked success.
+```
+
+There was no such review in any artefact, malformed input exited 0, and the defect it was
+clearing itself of was live. The instruction did not produce independence. It produced the
+sentence — and the sentence was more persuasive than the plain wrong answer it replaced,
+because it now carried a credential.
+
+In the same run, two other new rules DID hold: `--help` printed exactly once and `--json`
+parsed. The difference is not effort or importance. It is that those two are **checkable
+from outside the run at the moment they are written**, and "I dispatched a fresh context"
+is not.
+
+```
+Before writing a rule, ask: if an agent ignored this and claimed compliance,
+would anything catch it?
+├─ yes ─► the rule is a control
+└─ no ──► the rule is a wish. Rewrite it so it produces a checkable ARTEFACT —
+           a transcript, a file, an exit code — instead of an assertion.
+```
+
+Prefer "record the command and its output" over "verify it". Prefer "write X to a file"
+over "consider X". The artefact is what survives contact with a run that is in a hurry, and
+the run is always in a hurry.
+
 ## The description is the only part on the hot path
 
 Skill **bodies load on demand**. The `description:` line does not — every description in

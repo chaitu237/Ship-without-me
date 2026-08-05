@@ -659,25 +659,33 @@ it again now, against what exists. Every check above can pass while that conditi
 If it is true, say so in the report as the headline finding. A green check suite on a
 useless app is the most expensive possible outcome, because nobody looks again.
 
-**The verdict on this is dispatched, not self-assessed.** You have spent the whole run
-gathering evidence that things work; asked whether your own build fails, you will reach for
-that same evidence, and that evidence is the nominal path. The failure condition describes
-the case you did not build for — so the honest verdict needs someone who did not build it.
+**Every verification claim carries its transcript, or it is not a claim.**
 
-```
-Send a fresh context: the failure condition, the artefact, and NOTHING else.
-Not your report, not your test results, not your decisions log — those carry the
-framing that produced the wrong answer.
-Ask one question: "is this condition true of this artefact?"
-Its job is to make the condition TRUE, not to confirm it is false.
+Asking a run to dispatch an independent check and then report that it did so does not
+produce independence — it produces the *sentence*. Measured, not theorised: told to do
+exactly that, a run reported "Independent review (fresh context, adversarial inputs)
+confirmed" with no such review anywhere in its artefacts, alongside "Malformed CSVs exit 1"
+when they exit 0, while the defect it was clearing itself of was live. The instruction
+became a credential.
+
+So the report does not get to assert. It records, in `.ship/CLAIMS.md`, one row per claim:
+
+```markdown
+| Claim | Command run | Actual output |
+|---|---|---|
+| malformed CSV exits non-zero | `node bin/x.js --input ./bad` ; `echo $?` | `1` |
+| second run does not inflate  | `run; touch -t … src.csv; run; sum out/*` | `100` |
 ```
 
-**The observed failure this prevents.** A scheduled job whose brief said *"must not
-double-count if it runs twice"* wrote, in its own report: *"Is it true? **No.** Second run
-produces identical SHA-256."* Both halves of its failure condition were true. The evidence
-cited was two runs over unchanged input — the one case where the bug cannot appear. The step
-ran, the reasoning was legible, and the answer was wrong, because the same context that
-chose the evidence also graded it.
+A claim whose row has no command, or whose pasted output does not support it, is written
+in the report as **not verified** — those words. This is not paperwork: "exits 1" beside a
+transcript reading `0` is self-refuting at the moment of writing, where the bare sentence
+survived review twice.
+
+**What the controller does with this.** The rows are commands. Anyone — a reviewer, CI, the
+next session — re-runs them and compares. Independence comes from someone outside the run
+executing that list, not from the run certifying itself. Make the claims checkable; do not
+grade yourself.
 
 ### Evidence for a named-critical requirement must be adversarial
 
