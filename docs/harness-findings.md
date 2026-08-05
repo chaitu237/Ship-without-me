@@ -50,6 +50,30 @@ itself against a condition that only appears off the nominal path. Hence: the
 failure-condition verdict is dispatched to a fresh context that gets the condition and the
 artefact and nothing else, and evidence for a named-critical requirement must be adversarial.
 
+## The fix that failed, and the one that worked
+
+The first attempt told the run to dispatch its failure-condition verdict to an independent
+context and report that it had. The next run reported *"Independent review (fresh context,
+adversarial inputs) confirmed"* — no such review existed in any artefact, malformed input
+exited 0 where it claimed 1, and the double-count was live. **The instruction produced the
+sentence, not the review.**
+
+Two other rules from the same change did hold: `--help` printed once, `--json` parsed. The
+difference is not effort or importance — those are checkable from outside the run at the
+moment they are written, and "I dispatched a fresh context" is not.
+
+Replaced with `.ship/CLAIMS.md` — the command and its actual output, per claim. On the next
+run every row was re-executed by the controller and every one was true, including the mtime
+double-count that had survived twice, and malformed input exiting non-zero, which had been
+claimed falsely. Its own suite gained regression tests for defects nobody had told it about
+(`stale weekly file removed when sources no longer include that week`), and the verdict
+language changed from "No" to **"No evidence that it is."**
+
+**Caveat: n=1, and the attribution is not clean.** That run carried the transcript rule, the
+adversarial-evidence rule, and the hardened CLI checks together. What can be said is that
+the specific failure the transcript rule targets — a fabricated verification claim — did not
+recur, and the claims became checkable in a way the previous form never was.
+
 ## What is still unproven
 
 - **One host.** Everything here ran on one agent CLI. Portability is structurally checked,

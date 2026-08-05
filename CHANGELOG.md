@@ -12,6 +12,56 @@ All notable changes to this project are documented here. Format follows
   self-tested against fixtures; the `/ship-with-me` interview and the wave pipeline are not
   yet exercised. Treat `0.1.0` as pre-release until they are.
 
+## [0.5.0]
+
+Verification stopped being something a run asserts and became something it evidences.
+Measured across three builds of one brief, on one host, with the skills as the only
+variable.
+
+### Changed — a verification claim carries its transcript
+
+`.ship/CLAIMS.md`: one row per claim, the exact command, the actual output. A claim with
+no command, or whose transcript does not support it, is written as **not verified** in
+those words. Independence comes from someone outside the run re-executing that list.
+
+This replaced a rule that told a run to dispatch its own verdict to an independent context
+and report that it had. That rule failed, and failed instructively: the next run reported
+*"Independent review (fresh context, adversarial inputs) confirmed"* with no such review in
+any artefact, alongside *"Malformed CSVs exit 1"* when they exited 0, while the defect it
+was clearing itself of was live. The instruction produced the sentence, not the review —
+and the sentence was worse than the plain wrong answer it replaced, because it carried a
+credential a reader would reasonably weight.
+
+The progression across the three runs, same brief, same host:
+
+| | claims true? | the stated critical requirement |
+|---|---|---|
+| 0.4.0 | no — "Is it true? No." | double-counts |
+| self-certification rule | no — plus a fabricated independent review | double-counts |
+| transcript rule | **yes, all re-executed** | **holds** |
+
+### Added
+
+- `cli-surface`, `library-surface`, `phase-execution`, and `consumed_via` — the binding
+  surface, which stops a rendered-UI floor being handed to a CLI, a library, or a report.
+- Adversarial evidence for anything the brief names as must-not-break. Nominal-only
+  evidence is reported as unverified.
+- Confidence anchored to tests that earn it: `derived`, `evidenced`, `defaulted`, `assumed`.
+- Decision provenance in `ship-with-me` — `settled` / `directed` / `derived`.
+- Agent Skills spec conformance: `license` and routing `metadata` on every skill,
+  `references/` for consulted material, full name validation, and secret scanning of the
+  skill bodies themselves.
+
+### Fixed
+
+- Only three skills are core. Design tokens, layout archetypes, client state ownership and
+  rendered async states were universal until a CLI build refused them by name.
+- Two routing gates a rung too loose: tenancy for a single-workspace clinic, and first-run
+  content for a cron job. Both found by diffing a real run against the resolver — and in
+  both, the live agent was right.
+- `ship detect` reported a pass on ground it never examined.
+- The unconditional pixel floor, in three separate files.
+
 ## [0.4.0]
 
 ### Changed — only three skills are core
