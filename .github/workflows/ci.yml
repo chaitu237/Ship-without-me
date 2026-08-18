@@ -35,6 +35,9 @@ jobs:
       - name: Detector self-test against fixtures
         run: node scripts/test-detector.mjs
 
+      - name: Skill routing across product shapes
+        run: node scripts/plan.mjs --test
+
       - name: Eval cases well-formed
         run: node scripts/run-evals.mjs validate
 

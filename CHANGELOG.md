@@ -6,6 +6,31 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Waiver comments are scoped to the file or fetched URL they appear in, and the comment
+  form is language-specific: `<!-- -->` in HTML (including fetched pages), start-of-line
+  `//` / `/*` / JSDoc `*` in JS/TS/Go, `#` in Python/Ruby. A docs URL, HTML prose (`#`,
+  `*`, `/*`, protocol-relative `//`), or a JS string is not a waiver.
+- Fetched HTML cannot waive repo findings. Cross-origin script/link URLs on a scanned page
+  are not fetched, including a same-origin asset that 302s to another origin. `--url`
+  requests time out and cap body size.
+- `secret-in-repo` now matches OpenSSH keys, PKCS#8 encrypted keys, `.pem` files, and
+  `.env.*` variants.
+- `tenant-from-request` fires on `x-tenant-id` headers, Fastify-style `request.headers`,
+  and `req.headers.tenantId`; `cors-wildcard-credentials` fires on
+  `cors({ origin: '*', credentials: true })`.
+- `public anonymous` is no longer treated as a higher identity rung than multi-tenant, so
+  it does not select `account-lifecycle`. It is omitted from the identity rank list so
+  that property does not depend on a special-case guard.
+- Sibling-route findings (`missing-legal`, `soft-404`, `robots-blocks-all`) are tagged
+  with the fetched URL, so a page waiver still matches when the URL has a trailing slash.
+- `ship detect` does not walk `.agents/`, so local agent work files are not scanned as
+  product source.
+- Repo-wide absence rules (`no-password-reset`, `no-error-boundary`, `no-validation-schema`,
+  and the rest of that set) are attributed to the file that established the surface, so a
+  file-local waiver can silence them again.
+
 ### Not yet done
 
 - Neither orchestrator has been run end to end against a real project. The detector is

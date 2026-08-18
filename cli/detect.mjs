@@ -24,21 +24,44 @@ const add = (rule, level, msg, where = '') =>
 // ── waivers ────────────────────────────────────────────────────────────────
 // Syntax, written broken so this file does not waive its own checks:
 //   <!-- ship + "-disable" + " <rule-id>: reason" -->     in HTML
-//   //   ship + "-disable" + " <rule-id>: reason"         in code
-// A waiver is an ANNOTATION, so it must sit in a comment. Requiring the comment marker is
-// what stops a rule id merely *mentioned* in a string, a doc template, or help text from
-// silently disabling the rule it describes — which is a check that fails open, the worst
-// kind. The id is additionally validated against the real rule set before it is honoured.
-const WAIVER = /(?:\/\/|\/\*|\*|#|<!--)[^\n]*?ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
+//   //   ship + "-disable" + " <rule-id>: reason"         in JS/TS/Go
+//   #    ship + "-disable" + " <rule-id>: reason"         in Python/Ruby
+// A waiver is an ANNOTATION, so it must sit in a comment of that file's language.
+// Fetched HTML and `.html` honour only `<!-- -->` — `#`, `//`, `/*`, and a JSDoc `*`
+// in page prose are data, never a waiver. In JS, `//` and `/*` must start a line
+// (optional whitespace); `#` is not a JS comment. The id is validated against the
+// real rule set before it is honoured.
+const WAIVER_HTML  = /<!--[^\n]*?ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
+const WAIVER_SLASH = /(?:^|\n)\s*(?:\/\/|\/\*)[^\n]*?ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
+const WAIVER_STAR  = /(?:^|\n)\s*\*\s*ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
+const WAIVER_HASH  = /(?:^|\n)\s*#[^\n]*?ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
+const WAIVERS_FOR = {
+  html:   [WAIVER_HTML],
+  slash:  [WAIVER_SLASH, WAIVER_STAR],
+  hash:   [WAIVER_HASH],
+  markup: [WAIVER_HTML, WAIVER_SLASH, WAIVER_STAR],
+}
+const waiverKind = ext => {
+  if (ext === '.html') return 'html'
+  if (ext === '.py' || ext === '.rb') return 'hash'
+  if (ext === '.vue' || ext === '.svelte') return 'markup'
+  if (CODE_EXT.has(ext)) return 'slash'
+  return null
+}
 const waivedRaw = new Map()
-const collectWaivers = (text, where) => {
-  for (const m of text.matchAll(WAIVER)) {
-    if (!waivedRaw.has(m[1])) waivedRaw.set(m[1], { reason: m[2].trim(), where })
+const collectWaivers = (text, where, kind) => {
+  for (const re of (WAIVERS_FOR[kind] || [])) {
+    re.lastIndex = 0
+    for (const m of text.matchAll(re)) {
+      const list = waivedRaw.get(m[1]) || []
+      list.push({ reason: m[2].trim(), where })
+      waivedRaw.set(m[1], list)
+    }
   }
 }
 
 // ── repo discovery ─────────────────────────────────────────────────────────
-const SKIP = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.venv', '__pycache__', '.ship'])
+const SKIP = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.venv', '__pycache__', '.ship', '.agents'])
 const walk = (dir, out = [], depth = 0) => {
   if (depth > 6) return out
   let entries
@@ -65,9 +88,14 @@ const SECRET_PATTERNS = [
   [/\bsk-[A-Za-z0-9]{20,}/, 'API secret key'],
   [/\bAKIA[0-9A-Z]{16}\b/, 'AWS access key id'],
   [/\bghp_[A-Za-z0-9]{30,}/, 'GitHub token'],
-  [/-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/, 'private key'],
+  [/-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----/, 'private key'],
   [/\b(?:api[_-]?key|secret|password|token)\s*[:=]\s*["'][A-Za-z0-9_\-]{16,}["']/i, 'hardcoded credential'],
 ]
+const SECRET_EXT = new Set([...CODE_EXT, '.env', '.json', '.yml', '.yaml', '.pem', '.key', ''])
+const secretFile = (f, relPath) => {
+  const base = relPath.split(/[/\\]/).pop() || ''
+  return SECRET_EXT.has(extname(f)) || /^\.env($|\.)/.test(base)
+}
 const PLACEHOLDER = /^(changeme|xxx+|your[-_]?\w+[-_]?here|todo|replace[-_]?me|<.*>)$/i
 
 // Which surfaces this repo actually has. Drives the coverage report, so a group with no
@@ -152,18 +180,18 @@ function repoRules() {
     // fences, and a fenced example is indistinguishable from a real annotation — so a
     // project that documents this feature would silently disable the rules it documents.
     // Waivers belong in the code or markup they apply to.
-    if (ext === '.html' || CODE_EXT.has(ext)) collectWaivers(read(f), rel(f))
+    if (ext === '.html' || CODE_EXT.has(ext)) collectWaivers(read(f), rel(f), waiverKind(ext))
   }
 
   // secrets committed
   for (const f of files) {
-    const ext = extname(f)
-    if (!CODE_EXT.has(ext) && !['.env', '.json', '.yml', '.yaml', ''].includes(ext)) continue
-    if (rel(f).includes('.env.example') || rel(f).includes('.env.sample')) continue
+    const path = rel(f)
+    if (!secretFile(f, path)) continue
+    if (path.includes('.env.example') || path.includes('.env.sample')) continue
     const t = read(f)
     if (!t) continue
     for (const [re, label] of SECRET_PATTERNS) {
-      if (re.test(t)) { add('secret-in-repo', 'fail', `${label} appears committed`, rel(f)); break }
+      if (re.test(t)) { add('secret-in-repo', 'fail', `${label} appears committed`, path); break }
     }
   }
 
@@ -186,7 +214,9 @@ function repoRules() {
     if (missing.length)
       add('env-example-drift', 'fail', `read by code but absent from .env.example: ${missing.slice(0, 6).join(', ')}`, '.env.example')
   } else if (files.some(f => read(f).includes('process.env.'))) {
-    add('env-example-missing', 'warn', 'code reads env vars but there is no .env.example')
+    const envFile = files.filter(f => CODE_EXT.has(extname(f)) && read(f).includes('process.env.'))
+      .map(rel).sort()[0]
+    if (envFile) add('env-example-missing', 'warn', 'code reads env vars but there is no .env.example', envFile)
   }
 
   // fetch() outside the api client
@@ -233,7 +263,11 @@ function repoRules() {
   const ui = files.filter(f => CODE_EXT.has(extname(f)))
   const src = ui.map(f => ({ f: rel(f), t: read(f) }))
   const anyMatch = re => src.filter(s => re.test(s.t))
-  const routeish = re => src.some(s => re.test(s.t))
+  // A waiver line names the rule it disables. That name must not count as the
+  // missing path existing — `ship-disable no-password-reset` is not a reset route.
+  const withoutWaivers = t => t.replace(/^[^\n]*ship-disable[^\n]*$/gmi, '')
+  const routeish = re => src.some(s => re.test(withoutWaivers(s.t)))
+  const surfaceFile = re => [...src].filter(s => re.test(withoutWaivers(s.t))).map(s => s.f).sort()[0]
 
   // ── forms ────────────────────────────────────────────────────────────────
   for (const { f, t } of src) {
@@ -256,12 +290,11 @@ function repoRules() {
     if (/onChange=\{[^}]{0,80}(?:validate|setError|checkValid)/i.test(t))
       add('validate-on-keystroke', 'warn', 'validation appears to run on change — validate on blur instead', f)
   }
-  if (src.some(s => /<form\b/i.test(s.t)) &&
-      !src.some(s => /\b(?:zod|yup|valibot|joi|superstruct)\b/i.test(s.t)))
-    add('no-validation-schema', 'warn', 'forms present but no schema-validation library found')
-  if (src.some(s => /<form\b/i.test(s.t)) &&
-      !src.some(s => /disabled=\{[^}]*(?:isSubmitting|submitting|loading|pending)/i.test(s.t)))
-    add('submit-not-disabled', 'warn', 'no submit button disabled while submitting — double submission is likely')
+  const formWhere = surfaceFile(/<form\b/i)
+  if (formWhere && !src.some(s => /\b(?:zod|yup|valibot|joi|superstruct)\b/i.test(s.t)))
+    add('no-validation-schema', 'warn', 'forms present but no schema-validation library found', formWhere)
+  if (formWhere && !src.some(s => /disabled=\{[^}]*(?:isSubmitting|submitting|loading|pending)/i.test(s.t)))
+    add('submit-not-disabled', 'warn', 'no submit button disabled while submitting — double submission is likely', formWhere)
 
   // ── states ───────────────────────────────────────────────────────────────
   const fetchNoTimeout = anyMatch(/\bfetch\((?![^)]*(?:signal|AbortSignal|timeout))/)
@@ -276,12 +309,14 @@ function repoRules() {
   if (bare.length)
     add('no-empty-state', 'fail',
       `${bare.length} list view(s) render a collection with no empty state`, bare[0].f)
-  if (!src.some(s => /ErrorBoundary|componentDidCatch|errorElement/i.test(s.t)))
-    add('no-error-boundary', 'warn', 'no error boundary — one broken component will white-screen the app')
+  if (!src.some(s => /ErrorBoundary|componentDidCatch|errorElement/i.test(s.t))) {
+    const uiWhere = [...src].map(s => s.f).sort()[0]
+    if (uiWhere) add('no-error-boundary', 'warn', 'no error boundary — one broken component will white-screen the app', uiWhere)
+  }
 
   // ── account lifecycle ────────────────────────────────────────────────────
-  const hasAuth = routeish(/(?:sign[- ]?in|log[- ]?in|\/login|useAuth|authProvider)/i)
-  if (hasAuth) {
+  const authWhere = surfaceFile(/(?:sign[- ]?in|log[- ]?in|\/login|useAuth|authProvider)/i)
+  if (authWhere) {
     const need = [
       [/forgot[- ]?password|reset[- ]?password|password[- ]?reset/i, 'no-password-reset', 'fail', 'no forgot/reset-password path'],
       [/change[- ]?password|current[Pp]assword/i, 'no-change-password', 'warn', 'no change-password path'],
@@ -290,7 +325,7 @@ function repoRules() {
       [/export[- ]?(?:my[- ]?)?data|data[- ]?export|download[- ]?(?:my[- ]?)?data/i, 'no-data-export', 'warn', 'no data-export path'],
     ]
     for (const [re, rule, lvl, msg] of need)
-      if (!routeish(re)) add(rule, lvl, msg)
+      if (!routeish(re)) add(rule, lvl, msg, authWhere)
   }
 
   // ── auth screen defects ──────────────────────────────────────────────────
@@ -318,11 +353,13 @@ function repoRules() {
   for (const { f, t } of server) {
     if (/\b(?:router|app)\.(?:get|post|put|patch|delete)\(\s*["'`]\/(?!api\/v\d)/.test(t))
       add('unversioned-api', 'warn', 'routes registered without an /api/vN prefix', f)
-    if (/req\.(?:body|query|params)\.tenant_?[Ii]d|request\.(?:json|args)\[?["']tenant_id/.test(t))
+    if (/req(?:uest)?\.(?:body|query|params)\.tenant_?[Ii]d|request\.(?:json|args)\[?["']tenant_id|req(?:uest)?\.headers(?:\[[^\]]*tenant|\.tenant)|req(?:uest)?\.(?:header|get)\(\s*['"][^'"]*tenant/i.test(t))
       add('tenant-from-request', 'fail', 'tenant id read from the request — it must come from the session', f)
     if (/access_?token=|[?&]token=\$\{|[?&]api_?key=/.test(t))
       add('token-in-query', 'fail', 'auth token appears in a query string — it lands in logs and referrers', f)
-    if (/Access-Control-Allow-Origin["']?\s*[,:]\s*["']\*/.test(t) && /credentials/i.test(t))
+    if ((/Access-Control-Allow-Origin["']?\s*[,:]\s*["']\*/.test(t) && /credentials/i.test(t)) ||
+        /cors\(\s*\{[^}]*origin\s*:\s*['"]\*['"][^}]*credentials\s*:\s*true/is.test(t) ||
+        /cors\(\s*\{[^}]*credentials\s*:\s*true[^}]*origin\s*:\s*['"]\*['"]/is.test(t))
       add('cors-wildcard-credentials', 'fail', 'CORS wildcard origin combined with credentials', f)
     if (/\b(?:router|app)\.get\(\s*["'`][^"'`]*\/(?:users|orders|items|invoices|products|customers|jobs)["'`]/.test(t) &&
         !/\b(?:limit|per_?page|take|pageSize)\b/.test(t))
@@ -340,17 +377,49 @@ const FRAMEWORK_TITLES = [
 ]
 const tag = (h, re) => { const m = h.match(re); return m ? m[1].trim() : '' }
 
+const FETCH_MS = 8_000
+const FETCH_MAX = 2_000_000
+const fetchOpts = (redirect = 'follow') => ({
+  redirect,
+  headers: { 'User-Agent': 'ship-detect/1.0' },
+  signal: AbortSignal.timeout(FETCH_MS),
+})
+
+async function readLimited(res, max = FETCH_MAX) {
+  const declared = Number(res.headers.get('content-length'))
+  if (Number.isFinite(declared) && declared > max) throw new Error('response too large')
+  if (!res.body || typeof res.body.getReader !== 'function') {
+    const t = await res.text()
+    if (t.length > max) throw new Error('response too large')
+    return t
+  }
+  const reader = res.body.getReader()
+  const chunks = []
+  let n = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    n += value.byteLength
+    if (n > max) {
+      try { await reader.cancel() } catch { /* ignore */ }
+      throw new Error('response too large')
+    }
+    chunks.push(value)
+  }
+  return Buffer.concat(chunks.map(c => Buffer.from(c))).toString('utf8')
+}
+
 async function urlRules(url) {
   let res, html
   try {
-    res = await fetch(url, { redirect: 'follow', headers: { 'User-Agent': 'ship-detect/1.0' } })
-    html = await res.text()
+    res = await fetch(url, fetchOpts())
+    html = await readLimited(res)
   } catch (e) {
     add('unreachable', 'fail', `could not fetch: ${e.message}`, url)
     return
   }
   if (!res.ok) add('bad-status', 'fail', `returned HTTP ${res.status}`, url)
-  collectWaivers(html, url)
+  collectWaivers(html, url, 'html')
   const H = Object.fromEntries([...res.headers].map(([k, v]) => [k.toLowerCase(), v]))
 
   // — identity —
@@ -410,22 +479,22 @@ async function urlRules(url) {
   // — sibling routes —
   const origin = new URL(url).origin
   const probe = async path => {
-    try { const r = await fetch(origin + path, { redirect: 'follow', headers: { 'User-Agent': 'ship-detect/1.0' } }); return r }
+    try { return await fetch(origin + path, fetchOpts()) }
     catch { return null }
   }
   const [robots, priv, terms, notfound] = await Promise.all(
     ['/robots.txt', '/privacy', '/terms', '/__ship_detect_404_probe'].map(probe))
 
-  if (!robots || !robots.ok) add('no-robots', 'warn', 'no robots.txt', origin)
+  if (!robots || !robots.ok) add('no-robots', 'warn', 'no robots.txt', url)
   else {
-    const t = await robots.text()
+    const t = await readLimited(robots)
     if (/^\s*Disallow:\s*\/\s*$/mi.test(t) && !/^\s*Allow:/mi.test(t))
-      add('robots-blocks-all', 'fail', 'robots.txt contains "Disallow: /" — the whole site is delisted', origin)
+      add('robots-blocks-all', 'fail', 'robots.txt contains "Disallow: /" — the whole site is delisted', url)
   }
-  if (!priv?.ok) add('missing-legal', 'fail', 'no /privacy route — payment gateways and app stores require it', origin)
-  if (!terms?.ok) add('missing-legal-terms', 'fail', 'no /terms route', origin)
+  if (!priv?.ok) add('missing-legal', 'fail', 'no /privacy route — payment gateways and app stores require it', url)
+  if (!terms?.ok) add('missing-legal-terms', 'fail', 'no /terms route', url)
   if (notfound && notfound.status === 200)
-    add('soft-404', 'warn', 'unknown paths return HTTP 200 — should be a real 404', origin)
+    add('soft-404', 'warn', 'unknown paths return HTTP 200 — should be a real 404', url)
 
   // — bundle budget —
   const assets = [...html.matchAll(/<(?:script[^>]+src|link[^>]+href)=["']([^"']+\.(?:js|css)[^"']*)["']/gi)]
@@ -433,8 +502,12 @@ async function urlRules(url) {
   let js = 0, css = 0
   await Promise.all(assets.map(async a => {
     try {
-      const r = await fetch(new URL(a, url).href, { headers: { 'User-Agent': 'ship-detect/1.0' } })
-      const buf = await r.arrayBuffer()
+      const abs = new URL(a, url)
+      if (abs.origin !== new URL(url).origin) return
+      const r = await fetch(abs.href, fetchOpts('manual'))
+      if (new URL(r.url).origin !== new URL(url).origin) return
+      if (!r.ok) return
+      const buf = Buffer.from(await readLimited(r), 'utf8')
       const kb = buf.byteLength / 1024
       if (/\.css/.test(a)) css += kb; else js += kb
       if (/-[A-Za-z0-9_]{8,}\.(js|css)/.test(a)) {
@@ -584,7 +657,8 @@ const run = async () => {
 
   const kept = findings.filter(f => {
     if (allow && !allow.has(f.rule)) return false
-    if (waived.has(f.rule)) return false
+    const places = waived.get(f.rule)
+    if (places?.some(w => w.where === f.where)) return false
     if (!inspectable(f.rule)) return false
     return true
   })
@@ -611,7 +685,7 @@ const run = async () => {
         not_applicable: skipped.map(g => ({ group: g, reason: whySkipped(g) })),
         note: 'not_applicable groups were never examined. They are not passes.',
       },
-      waived: [...waived.entries()].map(([rule, w]) => ({ rule, ...w })),
+      waived: [...waived.entries()].flatMap(([rule, list]) => list.map(w => ({ rule, ...w }))),
       findings: kept,
     }, null, 2))
   } else {
@@ -667,7 +741,7 @@ ship detect — deterministic launch-readiness checks. No LLM, no key, no deps.
   npx ship-without-me detect --json               machine-readable, for CI
   npx ship-without-me detect --strict             warnings fail the build too
 
-Waive a rule inline, with a reason:
+Waive a rule inline, with a reason — it applies only to that file or fetched URL:
   <!-- ${DIR} no-h1: intentional SPA shell -->
   //   ${DIR} float-money: legacy column, migration scheduled
 

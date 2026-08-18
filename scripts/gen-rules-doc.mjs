@@ -49,8 +49,13 @@ Any rule can be waived inline, with a reason:
 // ${D} float-money: legacy column, migration scheduled for Q3
 \`\`\`
 
-The reason is required — a bare rule id is not honoured. Exit codes: \`0\` clean ·
-\`1\` failures · \`2\` nothing to check.
+The reason is required — a bare rule id is not honoured. The comment form must match the
+file: \`<!-- -->\` in HTML (including fetched pages), \`//\` or \`/* */\` at the start of
+a line in JS/TS/Go, \`#\` in Python/Ruby. A waiver applies only to findings from the file
+(or fetched URL) it appears in, not the rest of the run. Repo-wide absence rules
+(\`no-password-reset\`, \`no-error-boundary\`, and the rest of that set) are attributed to
+the file that established the surface, so the waiver belongs there. Exit codes: \`0\`
+clean · \`1\` failures · \`2\` nothing to check.
 
 ## Reference
 
