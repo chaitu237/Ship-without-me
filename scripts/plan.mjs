@@ -12,9 +12,10 @@ import { readFileSync, existsSync } from 'node:fs'
 
 const registry = JSON.parse(readFileSync(new URL('../skills/registry.json', import.meta.url), 'utf8'))
 
-const IDENTITY_RANK = ['none', 'local profile', 'one authenticated user', 'shared household', 'workspace', 'multi-tenant', 'public anonymous']
+const IDENTITY_RANK = ['none', 'local profile', 'one authenticated user', 'shared household', 'workspace', 'multi-tenant']
 // `public anonymous` is a sibling of `none` (strangers, no accounts), not a rung above
-// multi-tenant. `>= one authenticated user` must not select it.
+// multi-tenant. It is omitted from the rank list so `>= one authenticated user` cannot
+// select it even if the two `!==` guards below are deleted.
 
 // A gate is a claim about the situation. Anything it cannot express is deliberately NOT
 // forced through the closest expressible gate — it comes back as a gap instead.
@@ -57,7 +58,7 @@ function satisfies(gate, p) {
   const val = p[lhs]
   if (val === undefined) return false
   if (lhs === 'identity_model' && op === '>=')
-    return val !== 'none' && val !== 'public anonymous' &&
+    return val !== 'none' &&
       IDENTITY_RANK.indexOf(val) >= IDENTITY_RANK.indexOf(rhs)
   if (op === '!=') return String(val) !== rhs
   return String(val) === rhs

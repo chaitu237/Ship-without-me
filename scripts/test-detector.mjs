@@ -221,7 +221,7 @@ console.log('\nsame-file non-comments must not waive secret-in-repo:')
   assert(!waivedRules(r).includes('secret-in-repo'), '# in a JS string is not recorded as a waiver')
 }
 
-console.log('\nsecret-in-repo must fire on OpenSSH keys, .pem, and .env.local:')
+console.log('\nsecret-in-repo must fire on OpenSSH keys, .pem, PKCS#8 encrypted, and .env.local:')
 {
   const r = scan({ 'id_ed25519': OPENSSH })
   assert(rulesOf(r).includes('secret-in-repo'), 'OPENSSH private key in extensionless file')
@@ -231,8 +231,22 @@ console.log('\nsecret-in-repo must fire on OpenSSH keys, .pem, and .env.local:')
   assert(rulesOf(r).includes('secret-in-repo'), 'RSA private key in .pem')
 }
 {
+  const r = scan({
+    'enc.pem': '-----BEGIN ENCRYPTED PRIVATE KEY-----\nMIIEowIBAAKCAQEA0123456789\n-----END ENCRYPTED PRIVATE KEY-----\n',
+  })
+  assert(rulesOf(r).includes('secret-in-repo'), 'PKCS#8 ENCRYPTED PRIVATE KEY in .pem')
+}
+{
   const r = scan({ '.env.local': 'API_KEY=sk-abcdefghijklmnopqrstuvwxyz123456\n' })
   assert(rulesOf(r).includes('secret-in-repo'), 'sk- key in .env.local')
+}
+
+console.log('\nwalk() does not scan .agents/work:')
+{
+  const r = scan({
+    '.agents/work/scratch.js': SK,
+  })
+  assert(!rulesOf(r).includes('secret-in-repo'), 'secret in .agents/work is not a repo finding')
 }
 
 console.log('\napi rules must fire on header tenant ids and cors({ origin: \"*\" }):')
@@ -429,6 +443,33 @@ console.log('\nnon-HTML-comment prose in fetched HTML cannot waive fail-level UR
     const r = await runAsync(d, ['--url', origin + '/'])
     assert(waivedRules(r).includes('hsts'), 'HTML comment on the fetched page still waives hsts')
     assert(!rulesOf(r).includes('hsts'), 'hsts is quiet when the served page waives it')
+  } finally {
+    server.close()
+    rmSync(d, { recursive: true, force: true })
+  }
+}
+{
+  const d = tmp()
+  write(d, 'package.json', '{"name":"fx"}')
+  const { server, origin } = await listen((req, res) => {
+    if (req.url === '/privacy' || req.url === '/terms' || req.url === '/robots.txt') {
+      res.writeHead(404)
+      res.end()
+      return
+    }
+    res.writeHead(200, { 'content-type': 'text/html' })
+    res.end(landing(origin, [
+      '<!-- ship-disable missing-legal: legal lives on the marketing site -->',
+      '<!-- ship-disable missing-legal-terms: legal lives on the marketing site -->',
+      '<!-- ship-disable soft-404: this is an SPA -->',
+    ].join('\n')))
+  })
+  try {
+    const r = await runAsync(d, ['--url', origin + '/'])
+    assert(waivedRules(r).includes('missing-legal'), 'HTML comment waives missing-legal when the URL has a trailing slash')
+    assert(!rulesOf(r).includes('missing-legal'), 'missing-legal is quiet when the served page waives it')
+    assert(!rulesOf(r).includes('missing-legal-terms'), 'missing-legal-terms is quiet when the served page waives it')
+    assert(!rulesOf(r).includes('soft-404'), 'soft-404 is quiet when the served page waives it')
   } finally {
     server.close()
     rmSync(d, { recursive: true, force: true })

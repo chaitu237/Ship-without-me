@@ -61,7 +61,7 @@ const collectWaivers = (text, where, kind) => {
 }
 
 // ── repo discovery ─────────────────────────────────────────────────────────
-const SKIP = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.venv', '__pycache__', '.ship'])
+const SKIP = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.venv', '__pycache__', '.ship', '.agents'])
 const walk = (dir, out = [], depth = 0) => {
   if (depth > 6) return out
   let entries
@@ -88,7 +88,7 @@ const SECRET_PATTERNS = [
   [/\bsk-[A-Za-z0-9]{20,}/, 'API secret key'],
   [/\bAKIA[0-9A-Z]{16}\b/, 'AWS access key id'],
   [/\bghp_[A-Za-z0-9]{30,}/, 'GitHub token'],
-  [/-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/, 'private key'],
+  [/-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----/, 'private key'],
   [/\b(?:api[_-]?key|secret|password|token)\s*[:=]\s*["'][A-Za-z0-9_\-]{16,}["']/i, 'hardcoded credential'],
 ]
 const SECRET_EXT = new Set([...CODE_EXT, '.env', '.json', '.yml', '.yaml', '.pem', '.key', ''])
@@ -485,16 +485,16 @@ async function urlRules(url) {
   const [robots, priv, terms, notfound] = await Promise.all(
     ['/robots.txt', '/privacy', '/terms', '/__ship_detect_404_probe'].map(probe))
 
-  if (!robots || !robots.ok) add('no-robots', 'warn', 'no robots.txt', origin)
+  if (!robots || !robots.ok) add('no-robots', 'warn', 'no robots.txt', url)
   else {
     const t = await readLimited(robots)
     if (/^\s*Disallow:\s*\/\s*$/mi.test(t) && !/^\s*Allow:/mi.test(t))
-      add('robots-blocks-all', 'fail', 'robots.txt contains "Disallow: /" — the whole site is delisted', origin)
+      add('robots-blocks-all', 'fail', 'robots.txt contains "Disallow: /" — the whole site is delisted', url)
   }
-  if (!priv?.ok) add('missing-legal', 'fail', 'no /privacy route — payment gateways and app stores require it', origin)
-  if (!terms?.ok) add('missing-legal-terms', 'fail', 'no /terms route', origin)
+  if (!priv?.ok) add('missing-legal', 'fail', 'no /privacy route — payment gateways and app stores require it', url)
+  if (!terms?.ok) add('missing-legal-terms', 'fail', 'no /terms route', url)
   if (notfound && notfound.status === 200)
-    add('soft-404', 'warn', 'unknown paths return HTTP 200 — should be a real 404', origin)
+    add('soft-404', 'warn', 'unknown paths return HTTP 200 — should be a real 404', url)
 
   // — bundle budget —
   const assets = [...html.matchAll(/<(?:script[^>]+src|link[^>]+href)=["']([^"']+\.(?:js|css)[^"']*)["']/gi)]
