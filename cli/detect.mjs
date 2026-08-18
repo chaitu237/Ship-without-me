@@ -24,19 +24,33 @@ const add = (rule, level, msg, where = '') =>
 // ── waivers ────────────────────────────────────────────────────────────────
 // Syntax, written broken so this file does not waive its own checks:
 //   <!-- ship + "-disable" + " <rule-id>: reason" -->     in HTML
-//   //   ship + "-disable" + " <rule-id>: reason"         in code
-// A waiver is an ANNOTATION, so it must sit in a comment. Requiring the comment marker is
-// what stops a rule id merely *mentioned* in a string, a doc template, or help text from
-// silently disabling the rule it describes — which is a check that fails open, the worst
-// kind. The id is additionally validated against the real rule set before it is honoured.
-// `(?<!:)//` so `https://…ship-disable` in a string is not a comment. A lone `*` is not a
-// comment either — that made HTML prose (`Do not * ship-disable …`) fail open. JSDoc
-// continuations (` * ship-disable`) are a separate, start-of-line form.
-const WAIVER_LINE = /(?:(?<!:)\/\/|\/\*|#|<!--)[^\n]*?ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
-const WAIVER_STAR = /(?:^|\n)\s*\*\s*ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
+//   //   ship + "-disable" + " <rule-id>: reason"         in JS/TS/Go
+//   #    ship + "-disable" + " <rule-id>: reason"         in Python/Ruby
+// A waiver is an ANNOTATION, so it must sit in a comment of that file's language.
+// Fetched HTML and `.html` honour only `<!-- -->` — `#`, `//`, `/*`, and a JSDoc `*`
+// in page prose are data, never a waiver. In JS, `//` and `/*` must start a line
+// (optional whitespace); `#` is not a JS comment. The id is validated against the
+// real rule set before it is honoured.
+const WAIVER_HTML  = /<!--[^\n]*?ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
+const WAIVER_SLASH = /(?:^|\n)\s*(?:\/\/|\/\*)[^\n]*?ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
+const WAIVER_STAR  = /(?:^|\n)\s*\*\s*ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
+const WAIVER_HASH  = /(?:^|\n)\s*#[^\n]*?ship-disable\s+([a-z][a-z0-9-]*)\s*:\s*([^\n>*]+)/gi
+const WAIVERS_FOR = {
+  html:   [WAIVER_HTML],
+  slash:  [WAIVER_SLASH, WAIVER_STAR],
+  hash:   [WAIVER_HASH],
+  markup: [WAIVER_HTML, WAIVER_SLASH, WAIVER_STAR],
+}
+const waiverKind = ext => {
+  if (ext === '.html') return 'html'
+  if (ext === '.py' || ext === '.rb') return 'hash'
+  if (ext === '.vue' || ext === '.svelte') return 'markup'
+  if (CODE_EXT.has(ext)) return 'slash'
+  return null
+}
 const waivedRaw = new Map()
-const collectWaivers = (text, where) => {
-  for (const re of [WAIVER_LINE, WAIVER_STAR]) {
+const collectWaivers = (text, where, kind) => {
+  for (const re of (WAIVERS_FOR[kind] || [])) {
     re.lastIndex = 0
     for (const m of text.matchAll(re)) {
       const list = waivedRaw.get(m[1]) || []
@@ -166,7 +180,7 @@ function repoRules() {
     // fences, and a fenced example is indistinguishable from a real annotation — so a
     // project that documents this feature would silently disable the rules it documents.
     // Waivers belong in the code or markup they apply to.
-    if (ext === '.html' || CODE_EXT.has(ext)) collectWaivers(read(f), rel(f))
+    if (ext === '.html' || CODE_EXT.has(ext)) collectWaivers(read(f), rel(f), waiverKind(ext))
   }
 
   // secrets committed
@@ -200,7 +214,9 @@ function repoRules() {
     if (missing.length)
       add('env-example-drift', 'fail', `read by code but absent from .env.example: ${missing.slice(0, 6).join(', ')}`, '.env.example')
   } else if (files.some(f => read(f).includes('process.env.'))) {
-    add('env-example-missing', 'warn', 'code reads env vars but there is no .env.example')
+    const envFile = files.filter(f => CODE_EXT.has(extname(f)) && read(f).includes('process.env.'))
+      .map(rel).sort()[0]
+    if (envFile) add('env-example-missing', 'warn', 'code reads env vars but there is no .env.example', envFile)
   }
 
   // fetch() outside the api client
@@ -247,7 +263,11 @@ function repoRules() {
   const ui = files.filter(f => CODE_EXT.has(extname(f)))
   const src = ui.map(f => ({ f: rel(f), t: read(f) }))
   const anyMatch = re => src.filter(s => re.test(s.t))
-  const routeish = re => src.some(s => re.test(s.t))
+  // A waiver line names the rule it disables. That name must not count as the
+  // missing path existing — `ship-disable no-password-reset` is not a reset route.
+  const withoutWaivers = t => t.replace(/^[^\n]*ship-disable[^\n]*$/gmi, '')
+  const routeish = re => src.some(s => re.test(withoutWaivers(s.t)))
+  const surfaceFile = re => [...src].filter(s => re.test(withoutWaivers(s.t))).map(s => s.f).sort()[0]
 
   // ── forms ────────────────────────────────────────────────────────────────
   for (const { f, t } of src) {
@@ -270,12 +290,11 @@ function repoRules() {
     if (/onChange=\{[^}]{0,80}(?:validate|setError|checkValid)/i.test(t))
       add('validate-on-keystroke', 'warn', 'validation appears to run on change — validate on blur instead', f)
   }
-  if (src.some(s => /<form\b/i.test(s.t)) &&
-      !src.some(s => /\b(?:zod|yup|valibot|joi|superstruct)\b/i.test(s.t)))
-    add('no-validation-schema', 'warn', 'forms present but no schema-validation library found')
-  if (src.some(s => /<form\b/i.test(s.t)) &&
-      !src.some(s => /disabled=\{[^}]*(?:isSubmitting|submitting|loading|pending)/i.test(s.t)))
-    add('submit-not-disabled', 'warn', 'no submit button disabled while submitting — double submission is likely')
+  const formWhere = surfaceFile(/<form\b/i)
+  if (formWhere && !src.some(s => /\b(?:zod|yup|valibot|joi|superstruct)\b/i.test(s.t)))
+    add('no-validation-schema', 'warn', 'forms present but no schema-validation library found', formWhere)
+  if (formWhere && !src.some(s => /disabled=\{[^}]*(?:isSubmitting|submitting|loading|pending)/i.test(s.t)))
+    add('submit-not-disabled', 'warn', 'no submit button disabled while submitting — double submission is likely', formWhere)
 
   // ── states ───────────────────────────────────────────────────────────────
   const fetchNoTimeout = anyMatch(/\bfetch\((?![^)]*(?:signal|AbortSignal|timeout))/)
@@ -290,12 +309,14 @@ function repoRules() {
   if (bare.length)
     add('no-empty-state', 'fail',
       `${bare.length} list view(s) render a collection with no empty state`, bare[0].f)
-  if (!src.some(s => /ErrorBoundary|componentDidCatch|errorElement/i.test(s.t)))
-    add('no-error-boundary', 'warn', 'no error boundary — one broken component will white-screen the app')
+  if (!src.some(s => /ErrorBoundary|componentDidCatch|errorElement/i.test(s.t))) {
+    const uiWhere = [...src].map(s => s.f).sort()[0]
+    if (uiWhere) add('no-error-boundary', 'warn', 'no error boundary — one broken component will white-screen the app', uiWhere)
+  }
 
   // ── account lifecycle ────────────────────────────────────────────────────
-  const hasAuth = routeish(/(?:sign[- ]?in|log[- ]?in|\/login|useAuth|authProvider)/i)
-  if (hasAuth) {
+  const authWhere = surfaceFile(/(?:sign[- ]?in|log[- ]?in|\/login|useAuth|authProvider)/i)
+  if (authWhere) {
     const need = [
       [/forgot[- ]?password|reset[- ]?password|password[- ]?reset/i, 'no-password-reset', 'fail', 'no forgot/reset-password path'],
       [/change[- ]?password|current[Pp]assword/i, 'no-change-password', 'warn', 'no change-password path'],
@@ -304,7 +325,7 @@ function repoRules() {
       [/export[- ]?(?:my[- ]?)?data|data[- ]?export|download[- ]?(?:my[- ]?)?data/i, 'no-data-export', 'warn', 'no data-export path'],
     ]
     for (const [re, rule, lvl, msg] of need)
-      if (!routeish(re)) add(rule, lvl, msg)
+      if (!routeish(re)) add(rule, lvl, msg, authWhere)
   }
 
   // ── auth screen defects ──────────────────────────────────────────────────
@@ -332,7 +353,7 @@ function repoRules() {
   for (const { f, t } of server) {
     if (/\b(?:router|app)\.(?:get|post|put|patch|delete)\(\s*["'`]\/(?!api\/v\d)/.test(t))
       add('unversioned-api', 'warn', 'routes registered without an /api/vN prefix', f)
-    if (/req\.(?:body|query|params)\.tenant_?[Ii]d|request\.(?:json|args)\[?["']tenant_id|req\.headers\[[^\]]*tenant|req\.(?:header|get)\(\s*['"][^'"]*tenant/i.test(t))
+    if (/req(?:uest)?\.(?:body|query|params)\.tenant_?[Ii]d|request\.(?:json|args)\[?["']tenant_id|req(?:uest)?\.headers(?:\[[^\]]*tenant|\.tenant)|req(?:uest)?\.(?:header|get)\(\s*['"][^'"]*tenant/i.test(t))
       add('tenant-from-request', 'fail', 'tenant id read from the request — it must come from the session', f)
     if (/access_?token=|[?&]token=\$\{|[?&]api_?key=/.test(t))
       add('token-in-query', 'fail', 'auth token appears in a query string — it lands in logs and referrers', f)
@@ -358,8 +379,8 @@ const tag = (h, re) => { const m = h.match(re); return m ? m[1].trim() : '' }
 
 const FETCH_MS = 8_000
 const FETCH_MAX = 2_000_000
-const fetchOpts = () => ({
-  redirect: 'follow',
+const fetchOpts = (redirect = 'follow') => ({
+  redirect,
   headers: { 'User-Agent': 'ship-detect/1.0' },
   signal: AbortSignal.timeout(FETCH_MS),
 })
@@ -398,7 +419,7 @@ async function urlRules(url) {
     return
   }
   if (!res.ok) add('bad-status', 'fail', `returned HTTP ${res.status}`, url)
-  collectWaivers(html, url)
+  collectWaivers(html, url, 'html')
   const H = Object.fromEntries([...res.headers].map(([k, v]) => [k.toLowerCase(), v]))
 
   // — identity —
@@ -483,7 +504,9 @@ async function urlRules(url) {
     try {
       const abs = new URL(a, url)
       if (abs.origin !== new URL(url).origin) return
-      const r = await fetch(abs.href, fetchOpts())
+      const r = await fetch(abs.href, fetchOpts('manual'))
+      if (new URL(r.url).origin !== new URL(url).origin) return
+      if (!r.ok) return
       const buf = Buffer.from(await readLimited(r), 'utf8')
       const kb = buf.byteLength / 1024
       if (/\.css/.test(a)) css += kb; else js += kb

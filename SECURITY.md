@@ -19,9 +19,10 @@ narrow, and it is worth being specific about it.
   the most serious class of bug in this repo, because it produces false confidence. If you
   can make a rule silently not fire, that is a security report, not a bug report.
 - **Waiver bypass.** The waiver mechanism is deliberately narrow: a waiver must be a
-  comment, in a non-markdown file, naming a rule that actually exists. If you can disable
-  a rule without meeting all three conditions — or without a human writing it deliberately
-  — that is in scope.
+  comment in the syntax of that file's language, in a non-markdown file, naming a rule
+  that actually exists. Fetched HTML honours only `<!-- … -->`. If you can disable a
+  rule without meeting those conditions — or without a human writing it deliberately —
+  that is in scope.
 - **Guidance that would lead an agent to introduce a vulnerability.** A skill that
   recommends storing a secret unsafely, weakening authorization, or trusting untrusted
   input is a real defect even though it is only text.
@@ -42,9 +43,10 @@ give it. It has **zero dependencies**, sends nothing anywhere, stores nothing, a
 no API key or credential.
 
 It does not execute anything it reads. It does not fetch **cross-origin** URLs found in a
-page. Same-origin `.js` / `.css` referenced by that page are fetched only for the bundle
-budget rules, with a timeout and a size cap. A `ship-disable` comment in fetched HTML
-applies only to findings from that URL — never to files in the repo.
+page, and it does not follow a same-origin asset redirect onto another origin. Same-origin
+`.js` / `.css` referenced by that page are fetched only for the bundle budget rules, with
+a timeout and a size cap. A `ship-disable` HTML comment in fetched HTML applies only to
+findings from that URL — never to files in the repo.
 
 ## The secret rules are a smoke alarm, not a guarantee
 

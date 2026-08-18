@@ -190,6 +190,36 @@ console.log('\nwaiver is file-local, and a real comment in the same file still w
   assert(secrets.some(f => f.where === 'src/prod.js'), 'secret in prod.js still fires')
   assert(!secrets.some(f => f.where === 'src/fixture.js'), 'same-file comment waives only that file')
 }
+{
+  const r = scan({
+    'src/key.js': '/**\n * ship-disable secret-in-repo: synthetic JSDoc waiver\n */\n' + SK,
+  })
+  assert(!rulesOf(r).includes('secret-in-repo'), 'JSDoc continuation still waives in JS')
+  assert(waivedRules(r).includes('secret-in-repo'), 'JSDoc waiver is recorded')
+}
+{
+  const r = scan({
+    'app.py': '# ship-disable secret-in-repo: synthetic python waiver\nk = "sk-abcdefghijklmnopqrstuvwxyz123456"\n',
+  })
+  assert(!rulesOf(r).includes('secret-in-repo'), '# comment still waives in Python')
+  assert(waivedRules(r).includes('secret-in-repo'), 'Python hash waiver is recorded')
+}
+
+console.log('\nsame-file non-comments must not waive secret-in-repo:')
+{
+  const r = scan({
+    'src/key.js': 'const cdn = "//cdn.example.com/q=ship-disable secret-in-repo: in a URL"\n' + SK,
+  })
+  assert(rulesOf(r).includes('secret-in-repo'), 'protocol-relative // in a JS string is not a waiver')
+  assert(!waivedRules(r).includes('secret-in-repo'), 'protocol-relative // is not recorded as a waiver')
+}
+{
+  const r = scan({
+    'src/key.js': 'const note = "# ship-disable secret-in-repo: not a js comment"\n' + SK,
+  })
+  assert(rulesOf(r).includes('secret-in-repo'), '# in a JS string is not a waiver')
+  assert(!waivedRules(r).includes('secret-in-repo'), '# in a JS string is not recorded as a waiver')
+}
 
 console.log('\nsecret-in-repo must fire on OpenSSH keys, .pem, and .env.local:')
 {
@@ -220,6 +250,29 @@ app.get('/api/v1/invoices', (req, res) => {
 }
 {
   const r = scan({
+    'src/server.js': `const app = { get() {} }
+app.get('/api/v1/invoices', async (request, reply) => {
+  const tenantId = request.headers['x-tenant-id']
+  reply.send([])
+})
+`,
+  })
+  assert(rulesOf(r).includes('tenant-from-request'), 'tenant id from request.headers[x-tenant-id]')
+}
+{
+  const r = scan({
+    'src/server.js': `import express from 'express'
+const app = express()
+app.get('/api/v1/invoices', (req, res) => {
+  const tenantId = req.headers.tenantId
+  res.json([])
+})
+`,
+  })
+  assert(rulesOf(r).includes('tenant-from-request'), 'tenant id from req.headers.tenantId')
+}
+{
+  const r = scan({
     'src/server.js': `import express from 'express'
 import cors from 'cors'
 const app = express()
@@ -242,6 +295,35 @@ app.get('/api/v1/users', (req, res) => {
 `,
   })
   assert(!rulesOf(r).includes('cors-wildcard-credentials'), 'explicit origin allowlist is quiet')
+}
+
+console.log('\nabsence rules are waivable from the file that established the surface:')
+{
+  const r = scan({
+    'src/Form.tsx': `// ship-disable no-validation-schema: validated on the server
+// ship-disable submit-not-disabled: native form post
+// ship-disable no-error-boundary: host shell provides it
+export function F() {
+  return (<form>
+    <input type="text" name="email" />
+    <input type="password" name="password" />
+    <input type="text" name="amount" />
+    <button type="submit">Save</button>
+  </form>)
+}
+`,
+    'src/Login.tsx': `// ship-disable no-password-reset: SSO only
+// ship-disable no-account-deletion: SSO only
+export function Login() { return <a href="/login">Sign in</a> }
+`,
+  })
+  for (const rule of [
+    'no-validation-schema', 'submit-not-disabled', 'no-error-boundary',
+    'no-password-reset', 'no-account-deletion',
+  ]) {
+    assert(!rulesOf(r).includes(rule), `${rule} waived from the surface file`)
+    assert(waivedRules(r).includes(rule), `${rule} recorded as waived`)
+  }
 }
 
 const listen = (handler) => new Promise(resolve => {
@@ -304,6 +386,127 @@ console.log('\nfetched HTML cannot waive a local repo rule; same-page URL waiver
     const r = await runAsync(d, ['--url', origin + '/'])
     assert(waivedRules(r).includes('no-h1'), 'HTML comment on the fetched page still waives no-h1')
     assert(!rulesOf(r).includes('no-h1'), 'no-h1 is quiet when the served page waives it')
+  } finally {
+    server.close()
+    rmSync(d, { recursive: true, force: true })
+  }
+}
+
+console.log('\nnon-HTML-comment prose in fetched HTML cannot waive fail-level URL rules:')
+{
+  const d = tmp()
+  write(d, 'package.json', '{"name":"fx"}')
+  const { server, origin } = await listen((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' })
+    res.end(landing(origin, [
+      '# ship-disable hsts: hash is not an HTML comment',
+      '\n * ship-disable no-compression: JSDoc star is not an HTML comment',
+      '/* ship-disable no-nosniff: block comment is not an HTML comment */',
+      '<script src="//cdn.example.com/x.js?q=ship-disable hsts: protocol-relative"></script>',
+    ].join('\n')))
+  })
+  try {
+    const r = await runAsync(d, ['--url', origin + '/'])
+    assert(rulesOf(r).includes('hsts'), '# in fetched HTML does not waive hsts')
+    assert(rulesOf(r).includes('no-compression'), 'start-of-line * in fetched HTML does not waive no-compression')
+    assert(rulesOf(r).includes('no-nosniff'), '/* in fetched HTML does not waive no-nosniff')
+    assert(!waivedRules(r).includes('hsts'), 'fetched HTML hash/protocol-relative is not recorded as an hsts waiver')
+    assert(!waivedRules(r).includes('no-compression'), 'fetched HTML JSDoc star is not recorded as a waiver')
+    assert(!waivedRules(r).includes('no-nosniff'), 'fetched HTML block comment is not recorded as a waiver')
+  } finally {
+    server.close()
+    rmSync(d, { recursive: true, force: true })
+  }
+}
+{
+  const d = tmp()
+  write(d, 'package.json', '{"name":"fx"}')
+  const { server, origin } = await listen((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' })
+    res.end(landing(origin, '<!-- ship-disable hsts: local preview over http -->'))
+  })
+  try {
+    const r = await runAsync(d, ['--url', origin + '/'])
+    assert(waivedRules(r).includes('hsts'), 'HTML comment on the fetched page still waives hsts')
+    assert(!rulesOf(r).includes('hsts'), 'hsts is quiet when the served page waives it')
+  } finally {
+    server.close()
+    rmSync(d, { recursive: true, force: true })
+  }
+}
+
+console.log('\nsame-origin asset redirect to another origin is not followed:')
+{
+  const d = tmp()
+  write(d, 'package.json', '{"name":"fx"}')
+  const stealHits = []
+  const steal = await listen((req, res) => {
+    stealHits.push(req.url)
+    res.writeHead(200, { 'content-type': 'application/javascript' })
+    res.end('// steal')
+  })
+  const { server, origin } = await listen((req, res) => {
+    if (req.url === '/app-abcdef12.js') {
+      res.writeHead(302, { location: `${steal.origin}/stolen.js` })
+      res.end()
+      return
+    }
+    res.writeHead(200, { 'content-type': 'text/html' })
+    res.end(landing(origin, '<script src="/app-abcdef12.js"></script>'))
+  })
+  try {
+    await runAsync(d, ['--url', origin + '/'])
+    assert(stealHits.length === 0, 'does not follow a same-origin 302 to a cross-origin script')
+  } finally {
+    server.close()
+    steal.server.close()
+    rmSync(d, { recursive: true, force: true })
+  }
+}
+
+console.log('\n--url fetch times out and rejects oversized bodies:')
+{
+  const d = tmp()
+  write(d, 'package.json', '{"name":"fx"}')
+  const { server, origin } = await listen(() => { /* hang */ })
+  try {
+    const r = await runAsync(d, ['--url', origin + '/'], 20_000)
+    const unreach = (r.findings || []).find(f => f.rule === 'unreachable')
+    assert(!!unreach, 'hanging --url is unreachable, not a hang of the CLI')
+  } finally {
+    server.close()
+    rmSync(d, { recursive: true, force: true })
+  }
+}
+{
+  const d = tmp()
+  write(d, 'package.json', '{"name":"fx"}')
+  const { server, origin } = await listen((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html', 'content-length': '3000000' })
+    res.end(landing(origin))
+  })
+  try {
+    const r = await runAsync(d, ['--url', origin + '/'])
+    const unreach = (r.findings || []).find(f => f.rule === 'unreachable')
+    assert(!!unreach, 'lying Content-Length above the cap is unreachable')
+    assert(/too large/i.test(unreach?.msg || ''), 'lying Content-Length names the size cap')
+  } finally {
+    server.close()
+    rmSync(d, { recursive: true, force: true })
+  }
+}
+{
+  const d = tmp()
+  write(d, 'package.json', '{"name":"fx"}')
+  const { server, origin } = await listen((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' })
+    res.end('x'.repeat(2_000_001))
+  })
+  try {
+    const r = await runAsync(d, ['--url', origin + '/'])
+    const unreach = (r.findings || []).find(f => f.rule === 'unreachable')
+    assert(!!unreach, 'streamed body above the cap is unreachable')
+    assert(/too large/i.test(unreach?.msg || ''), 'streamed oversized body names the size cap')
   } finally {
     server.close()
     rmSync(d, { recursive: true, force: true })

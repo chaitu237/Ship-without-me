@@ -8,16 +8,22 @@ All notable changes to this project are documented here. Format follows
 
 ### Fixed
 
-- Waiver comments are scoped to the file or fetched URL they appear in. `https://` and a
-  lone `*` are no longer treated as comment markers, so a docs URL or HTML prose cannot
-  silently disable `secret-in-repo` (or any other rule) for the rest of the run.
+- Waiver comments are scoped to the file or fetched URL they appear in, and the comment
+  form is language-specific: `<!-- -->` in HTML (including fetched pages), start-of-line
+  `//` / `/*` / JSDoc `*` in JS/TS/Go, `#` in Python/Ruby. A docs URL, HTML prose (`#`,
+  `*`, `/*`, protocol-relative `//`), or a JS string is not a waiver.
 - Fetched HTML cannot waive repo findings. Cross-origin script/link URLs on a scanned page
-  are not fetched. `--url` requests time out and cap body size.
+  are not fetched, including a same-origin asset that 302s to another origin. `--url`
+  requests time out and cap body size.
 - `secret-in-repo` now matches OpenSSH private keys, `.pem` files, and `.env.*` variants.
-- `tenant-from-request` fires on `x-tenant-id` headers; `cors-wildcard-credentials` fires
-  on `cors({ origin: '*', credentials: true })`.
+- `tenant-from-request` fires on `x-tenant-id` headers, Fastify-style `request.headers`,
+  and `req.headers.tenantId`; `cors-wildcard-credentials` fires on
+  `cors({ origin: '*', credentials: true })`.
 - `public anonymous` is no longer treated as a higher identity rung than multi-tenant, so
   it does not select `account-lifecycle`.
+- Repo-wide absence rules (`no-password-reset`, `no-error-boundary`, `no-validation-schema`,
+  and the rest of that set) are attributed to the file that established the surface, so a
+  file-local waiver can silence them again.
 
 ### Not yet done
 
