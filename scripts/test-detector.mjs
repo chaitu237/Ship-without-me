@@ -9,20 +9,43 @@
 // credential. It exists so the secret-in-repo rule has something to fire on.
 
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
-import { execFileSync } from 'node:child_process'
+import { execFile, execFileSync } from 'node:child_process'
+import { promisify } from 'node:util'
+import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const CLI = new URL('../cli/detect.mjs', import.meta.url).pathname
 
-const run = dir => {
+const execFileP = promisify(execFile)
+
+const parseOut = raw => {
+  try { return JSON.parse(raw) } catch { return { findings: [] } }
+}
+
+const run = (dir, extra = [], timeout = 20_000) => {
   let out
   try {
-    out = execFileSync('node', [CLI, '--dir', dir, '--rules', 'all', '--json'], { encoding: 'utf8' })
+    out = execFileSync('node', [CLI, '--dir', dir, '--rules', 'all', '--json', ...extra], {
+      encoding: 'utf8', timeout,
+    })
   } catch (e) {
-    out = e.stdout || '{}' // exit 1 on findings is expected
+    if (e.killed) throw e
+    out = e.stdout || '{}'
   }
-  try { return JSON.parse(out) } catch { return { findings: [] } }
+  return parseOut(out)
+}
+
+const runAsync = async (dir, extra = [], timeout = 20_000) => {
+  try {
+    const { stdout } = await execFileP('node', [CLI, '--dir', dir, '--rules', 'all', '--json', ...extra], {
+      encoding: 'utf8', timeout,
+    })
+    return parseOut(stdout)
+  } catch (e) {
+    if (e.killed) throw e
+    return parseOut(e.stdout || '{}')
+  }
 }
 
 const write = (dir, rel, body) => {
@@ -123,5 +146,169 @@ for (const r of [
 
 if (failed) console.error(`\nfixture kept for inspection: ${dir}`)
 else rmSync(dir, { recursive: true, force: true })
+
+const tmp = () => mkdtempSync(join(tmpdir(), 'ship-fx-'))
+const SK = 'const k = "sk-abcdefghijklmnopqrstuvwxyz123456"\n'
+const RSA = '-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0123456789\n-----END RSA PRIVATE KEY-----\n'
+const OPENSSH = '-----BEGIN OPENSSH PRIVATE KEY-----\nabcdefghijklmnopqrstuvwxyz0123456789+/\n-----END OPENSSH PRIVATE KEY-----\n'
+
+const scan = files => {
+  const d = tmp()
+  write(d, 'package.json', '{"name":"fx"}')
+  for (const [rel, body] of Object.entries(files)) write(d, rel, body)
+  const result = run(d)
+  rmSync(d, { recursive: true, force: true })
+  return result
+}
+const rulesOf = r => (r.findings || []).map(f => f.rule)
+const waivedRules = r => (r.waived || []).map(w => w.rule)
+
+console.log('\nwaiver must not fire from a URL or from HTML prose:')
+{
+  const r = scan({
+    'src/secrets.js': SK,
+    'src/docs.js': 'const docs = "https://example.com/q=ship-disable secret-in-repo: mentioned in a URL"\n',
+  })
+  assert(rulesOf(r).includes('secret-in-repo'), 'https:// line does not waive secret-in-repo')
+  assert(!waivedRules(r).includes('secret-in-repo'), 'https:// line is not recorded as a waiver')
+}
+{
+  const r = scan({
+    'src/secrets.js': SK,
+    'index.html': '<!doctype html><p>Do not * ship-disable secret-in-repo: this is prose</p>\n',
+  })
+  assert(rulesOf(r).includes('secret-in-repo'), 'HTML asterisk prose does not waive secret-in-repo')
+}
+
+console.log('\nwaiver is file-local, and a real comment in the same file still works:')
+{
+  const r = scan({
+    'src/fixture.js': '// ship-disable secret-in-repo: synthetic key in this file only\n' + SK,
+    'src/prod.js': SK,
+  })
+  const secrets = (r.findings || []).filter(f => f.rule === 'secret-in-repo')
+  assert(secrets.some(f => f.where === 'src/prod.js'), 'secret in prod.js still fires')
+  assert(!secrets.some(f => f.where === 'src/fixture.js'), 'same-file comment waives only that file')
+}
+
+console.log('\nsecret-in-repo must fire on OpenSSH keys, .pem, and .env.local:')
+{
+  const r = scan({ 'id_ed25519': OPENSSH })
+  assert(rulesOf(r).includes('secret-in-repo'), 'OPENSSH private key in extensionless file')
+}
+{
+  const r = scan({ 'server.pem': RSA })
+  assert(rulesOf(r).includes('secret-in-repo'), 'RSA private key in .pem')
+}
+{
+  const r = scan({ '.env.local': 'API_KEY=sk-abcdefghijklmnopqrstuvwxyz123456\n' })
+  assert(rulesOf(r).includes('secret-in-repo'), 'sk- key in .env.local')
+}
+
+console.log('\napi rules must fire on header tenant ids and cors({ origin: \"*\" }):')
+{
+  const r = scan({
+    'src/server.js': `import express from 'express'
+const app = express()
+app.get('/api/v1/invoices', (req, res) => {
+  const tenantId = req.headers['x-tenant-id']
+  res.json([])
+})
+`,
+  })
+  assert(rulesOf(r).includes('tenant-from-request'), 'tenant id from x-tenant-id header')
+}
+{
+  const r = scan({
+    'src/server.js': `import express from 'express'
+import cors from 'cors'
+const app = express()
+app.use(cors({ origin: '*', credentials: true }))
+app.get('/api/v1/users', (req, res) => res.json([]))
+`,
+  })
+  assert(rulesOf(r).includes('cors-wildcard-credentials'), 'cors({ origin: "*", credentials: true })')
+}
+{
+  const r = scan({
+    'src/server.js': `import express from 'express'
+import cors from 'cors'
+const app = express()
+app.use(cors({ origin: 'https://app.example.com', credentials: true }))
+app.get('/api/v1/users', (req, res) => {
+  const limit = 25
+  res.json([])
+})
+`,
+  })
+  assert(!rulesOf(r).includes('cors-wildcard-credentials'), 'explicit origin allowlist is quiet')
+}
+
+const listen = (handler) => new Promise(resolve => {
+  const server = createServer(handler)
+  server.listen(0, '127.0.0.1', () => {
+    const { port } = server.address()
+    resolve({ server, origin: `http://127.0.0.1:${port}` })
+  })
+})
+
+const landing = (origin, extra = '') => `<!doctype html><html lang="en"><head>
+<title>A Real Product Title For Detect</title>
+<meta name="description" content="A sufficiently long meta description that should pass the length check for this tool.">
+<link rel="canonical" href="${origin}/">
+<link rel="icon" href="/favicon.ico">
+<meta property="og:image" content="${origin}/og.png">
+<meta property="og:title" content="A Real Product Title For Detect">
+<meta name="twitter:card" content="summary">
+</head><body>
+<h1>Hello from the landing page with enough static body text to avoid the shell-html rule firing on this response.</h1>
+<p>More words to pad the body text past two hundred characters. Padding padding padding padding padding padding padding padding padding.</p>
+${extra}
+</body></html>`
+
+console.log('\nfetched HTML cannot waive a local repo rule; same-page URL waivers stay on that URL:')
+{
+  const d = tmp()
+  write(d, 'package.json', '{"name":"fx"}')
+  write(d, 'src/secrets.js', SK)
+  const stealHits = []
+  const steal = await listen((req, res) => {
+    stealHits.push(req.url)
+    res.writeHead(200, { 'content-type': 'application/javascript' })
+    res.end('// steal')
+  })
+  const { server, origin } = await listen((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' })
+    res.end(landing(origin,
+      `<!-- ship-disable secret-in-repo: remote html must not do this -->\n<script src="${steal.origin}/steal.js"></script>`))
+  })
+  try {
+    const r = await runAsync(d, ['--url', origin + '/'])
+    assert(rulesOf(r).includes('secret-in-repo'), 'remote HTML waiver does not silence local secret-in-repo')
+    assert(stealHits.length === 0, 'does not fetch a cross-origin script src from the page')
+  } finally {
+    server.close()
+    steal.server.close()
+    rmSync(d, { recursive: true, force: true })
+  }
+}
+{
+  const d = tmp()
+  write(d, 'package.json', '{"name":"fx"}')
+  const { server, origin } = await listen((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' })
+    res.end(landing(origin, '<!-- ship-disable no-h1: intentional SPA shell -->')
+      .replace(/<h1>[\s\S]*?<\/h1>/, ''))
+  })
+  try {
+    const r = await runAsync(d, ['--url', origin + '/'])
+    assert(waivedRules(r).includes('no-h1'), 'HTML comment on the fetched page still waives no-h1')
+    assert(!rulesOf(r).includes('no-h1'), 'no-h1 is quiet when the served page waives it')
+  } finally {
+    server.close()
+    rmSync(d, { recursive: true, force: true })
+  }
+}
+
 console.log(failed ? `\n${failed} assertion(s) failed` : '\ndetector self-test passed')
 process.exit(failed ? 1 : 0)

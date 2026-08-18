@@ -13,6 +13,8 @@ import { readFileSync, existsSync } from 'node:fs'
 const registry = JSON.parse(readFileSync(new URL('../skills/registry.json', import.meta.url), 'utf8'))
 
 const IDENTITY_RANK = ['none', 'local profile', 'one authenticated user', 'shared household', 'workspace', 'multi-tenant', 'public anonymous']
+// `public anonymous` is a sibling of `none` (strangers, no accounts), not a rung above
+// multi-tenant. `>= one authenticated user` must not select it.
 
 // A gate is a claim about the situation. Anything it cannot express is deliberately NOT
 // forced through the closest expressible gate — it comes back as a gap instead.
@@ -55,7 +57,8 @@ function satisfies(gate, p) {
   const val = p[lhs]
   if (val === undefined) return false
   if (lhs === 'identity_model' && op === '>=')
-    return IDENTITY_RANK.indexOf(val) >= IDENTITY_RANK.indexOf(rhs) && val !== 'none'
+    return val !== 'none' && val !== 'public anonymous' &&
+      IDENTITY_RANK.indexOf(val) >= IDENTITY_RANK.indexOf(rhs)
   if (op === '!=') return String(val) !== rhs
   return String(val) === rhs
 }
@@ -212,6 +215,19 @@ const CASES = [
     must: ['forms-and-validation', 'onboarding-first-run', 'design-system-commit', 'states-and-feedback'],
     must_not: ['database-schema', 'backend-api-design', 'tenant-auth-demo', 'landing-composition',
                'account-lifecycle', 'identity-access-decision', 'vertical-business-os'],
+  },
+  {
+    name: 'public anonymous feed',
+    profile: {
+      consumed_via: 'pixels, through rendered UI',
+      first_value_event: 'A stranger reads a post without creating an account',
+      value_location: 'between people', state_owners: ['an app server'],
+      time_model: 'request/response', content_source: 'community',
+      identity_model: 'public anonymous', persistence_model: 'server', distribution: 'public',
+      core_capabilities: ['user to user reach'],
+    },
+    must: ['identity-access-decision', 'feed-and-social', 'database-schema'],
+    must_not: ['account-lifecycle', 'tenant-auth-demo'],
   },
 ]
 

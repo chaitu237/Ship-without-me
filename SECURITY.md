@@ -41,7 +41,10 @@ narrow, and it is worth being specific about it.
 give it. It has **zero dependencies**, sends nothing anywhere, stores nothing, and requires
 no API key or credential.
 
-It does not execute anything it reads. It does not follow links found in fetched pages.
+It does not execute anything it reads. It does not fetch **cross-origin** URLs found in a
+page. Same-origin `.js` / `.css` referenced by that page are fetched only for the bundle
+budget rules, with a timeout and a size cap. A `ship-disable` comment in fetched HTML
+applies only to findings from that URL — never to files in the repo.
 
 ## The secret rules are a smoke alarm, not a guarantee
 

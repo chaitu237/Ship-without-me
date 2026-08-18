@@ -6,6 +6,19 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Waiver comments are scoped to the file or fetched URL they appear in. `https://` and a
+  lone `*` are no longer treated as comment markers, so a docs URL or HTML prose cannot
+  silently disable `secret-in-repo` (or any other rule) for the rest of the run.
+- Fetched HTML cannot waive repo findings. Cross-origin script/link URLs on a scanned page
+  are not fetched. `--url` requests time out and cap body size.
+- `secret-in-repo` now matches OpenSSH private keys, `.pem` files, and `.env.*` variants.
+- `tenant-from-request` fires on `x-tenant-id` headers; `cors-wildcard-credentials` fires
+  on `cors({ origin: '*', credentials: true })`.
+- `public anonymous` is no longer treated as a higher identity rung than multi-tenant, so
+  it does not select `account-lifecycle`.
+
 ### Not yet done
 
 - Neither orchestrator has been run end to end against a real project. The detector is

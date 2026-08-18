@@ -49,8 +49,9 @@ Any rule can be waived inline, with a reason:
 // ${D} float-money: legacy column, migration scheduled for Q3
 \`\`\`
 
-The reason is required — a bare rule id is not honoured. Exit codes: \`0\` clean ·
-\`1\` failures · \`2\` nothing to check.
+The reason is required — a bare rule id is not honoured. A waiver applies only to
+findings from the file (or fetched URL) it appears in, not the rest of the run. Exit
+codes: \`0\` clean · \`1\` failures · \`2\` nothing to check.
 
 ## Reference
 
