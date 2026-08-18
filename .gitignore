@@ -17,6 +17,7 @@ node_modules/
 
 # Working state written by the orchestrator skills into a consuming project
 .ship/
+.agents/work/
 
 # Eval run output — results are machine-specific, cases are not
 evals/results/
