@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Internal maintenance billing workspace for bus fleets: capture vendor invoices, verify, approve, pay, and retain an audit trail." />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="hsl(38 92% 48%)" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23e88b00'/><path d='M14 18h36v27H14z' fill='%23fffaf2'/><circle cx='22' cy='48' r='5' fill='%23342100'/><circle cx='42' cy='48' r='5' fill='%23342100'/><path d='M18 23h28v11H18z' fill='%23f6d79a'/></svg>" />
+  <title>FleetLedger · Maintenance Billing</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">FL</div>
+        <div><strong>FleetLedger</strong><span>Maintenance Billing</span></div>
+      </div>
+      <nav class="nav-list" id="desktop-nav">
+        <button class="nav-item" data-route="dashboard"><span aria-hidden="true">▦</span> Dashboard</button>
+        <button class="nav-item" data-route="bills"><span aria-hidden="true">₹</span> Bills</button>
+        <button class="nav-item" data-route="fleet"><span aria-hidden="true">▤</span> Fleet</button>
+        <button class="nav-item" data-route="vendors"><span aria-hidden="true">◇</span> Vendors</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="health"><span class="health-dot" aria-hidden="true"></span><span>Local data ready</span></div>
+        <button class="ghost-button compact" id="theme-toggle" type="button" aria-label="Toggle colour theme">Theme</button>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="org-label">Sahyadri Travels · Pune Depot</p>
+          <h1 id="page-title">Dashboard</h1>
+        </div>
+        <div class="topbar-actions">
+          <div class="operator" aria-label="Current role">
+            <span class="avatar" aria-hidden="true">MB</span>
+            <div><strong>Maintenance Billing</strong><span>Internal workspace</span></div>
+          </div>
+        </div>
+      </header>
+
+      <main id="main-content" tabindex="-1"></main>
+      <footer class="app-footer">Data stays in this browser in this MVP. <a href="./privacy.html">Privacy & data handling</a></footer>
+    </section>
+  </div>
+
+  <nav class="mobile-nav" aria-label="Mobile navigation">
+    <button data-route="dashboard"><span aria-hidden="true">▦</span><span>Home</span></button>
+    <button data-route="bills"><span aria-hidden="true">₹</span><span>Bills</span></button>
+    <button data-route="fleet"><span aria-hidden="true">▤</span><span>Fleet</span></button>
+    <button data-route="vendors"><span aria-hidden="true">◇</span><span>Vendors</span></button>
+  </nav>
+
+  <div class="toast-region" id="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div class="sr-only" id="form-announcer" aria-live="assertive"></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
