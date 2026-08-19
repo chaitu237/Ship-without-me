@@ -1,0 +1,39 @@
+{
+  "first_value_event": "A maintenance invoice is saved against a known bus and vendor with a reconciled net payable amount and appears in the verification queue.",
+  "value_location": "a sequence of operational records",
+  "state_owners": [
+    "a human workflow (maintenance billing, supervisor approval, accounts payment)",
+    "local persistent storage (authoritative for this single-workstation MVP)"
+  ],
+  "time_model": "transactional",
+  "content_source": "user-created and user-owned CSV import",
+  "identity_model": "none (single trusted workstation MVP; authenticated workspace is a production gap)",
+  "persistence_model": "local",
+  "connectivity_model": "offline-capable",
+  "distribution": "internal",
+  "criticality": "reversible",
+  "consumed_via": "pixels, through rendered UI",
+  "core_capabilities": [
+    "maintenance invoice data entry",
+    "integer-money billing calculation",
+    "append-only approval and payment event ledger",
+    "bill search and status filtering",
+    "fleet and vendor master records",
+    "CSV import and export",
+    "draft persistence and reload recovery",
+    "responsive operational UI"
+  ],
+  "selected_skills": [
+    "ship-without-me",
+    "product-profile",
+    "core-interaction-contract",
+    "vertical-business-os",
+    "design-system-commit",
+    "app-shell-composition",
+    "forms-and-validation",
+    "list-and-table"
+  ],
+  "gaps": [
+    "authenticated shared workspace and server persistence for production"
+  ]
+}

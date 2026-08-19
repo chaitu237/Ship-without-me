@@ -1,0 +1,11 @@
+{
+  "spend": { "allowed": false, "reason": "no budget granted" },
+  "outbound_send": { "allowed": false, "surfaces": ["email", "sms", "chat", "social"] },
+  "publish_registry": { "allowed": false },
+  "production_data": { "allowed": false, "note": "only generated demo/local user data" },
+  "network_write": { "allowed": false },
+  "infra_mutation": { "allowed": false, "reason": "no deployment requested" },
+  "physical_action": { "allowed": false },
+  "domains_fetched": [],
+  "budget": { "max_agents": 12, "max_phase_retries": 2, "on_exceed": "stop receipt" }
+}

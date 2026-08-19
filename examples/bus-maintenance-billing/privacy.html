@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="description" content="Data handling notes for the FleetLedger maintenance billing MVP." />
+  <title>Privacy & Data Handling · FleetLedger</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main style="max-width:760px;margin:0 auto;padding:48px 20px">
+    <a href="./">← Back to FleetLedger</a>
+    <article class="card" style="margin-top:24px;padding:24px">
+      <p class="eyebrow">Internal MVP</p>
+      <h1>Privacy & data handling</h1>
+      <p>This build is an internal prototype for maintenance billing. It stores the organisation, fleet, vendor, invoice and workflow records in the browser's local storage on the device where it is used.</p>
+      <h2 style="margin-top:28px">What this MVP does</h2>
+      <p>It keeps entered data on the current browser, supports CSV export, and records bill lifecycle events. It does not transmit data to a server, bank, payment provider, tax portal or analytics service.</p>
+      <h2 style="margin-top:28px">Operational boundary</h2>
+      <p>Do not treat this browser-only build as the final shared system of record. Before production use, add authenticated workspace access, server-side persistence, backup/restore, permissions, and an organisation-approved retention policy.</p>
+      <h2 style="margin-top:28px">Financial boundary</h2>
+      <p>Payment references are records only. The app does not initiate payments or determine whether GST, TDS or another statutory treatment applies to a specific invoice.</p>
+    </article>
+  </main>
+</body>
+</html>
